@@ -19,10 +19,9 @@ from textwrap import dedent
 import unittest
 
 from astroid import nodes
-from astroid.tree.node_classes import Assign, Expr, YieldFrom, Name, Const
-from astroid import raw_building
+from astroid.tree.node_classes import (Assign, Expr, YieldFrom, Name,
+                                       Const, ClassDef, FunctionDef)
 from astroid.builder import AstroidBuilder
-from astroid.tree.scoped_nodes import ClassDef, FunctionDef
 from astroid.test_utils import require_version, extract_node
 
 
@@ -250,12 +249,16 @@ class Python3TC(unittest.TestCase):
             self.assertIsInstance(value, nodes.Const)
             self.assertEqual(value.value, expected)
 
-    @require_version(minver='3.5')
-    def test_positional_only_parameters(self):
-        ast = raw_building.ast_from_object(issubclass)
-        self.assertEqual(len(ast.args.positional_only), 2)
-        for name, arg in zip(('cls', 'class_or_tuple'), ast.args.positional_only):
-            self.assertEqual(arg.name, name)
+    # TODO: figure out what to do with this test.  Arguments should
+    # probably provide support for positional-only parameters, but how
+    # do we test it without raw_building?
+
+    # @require_version(minver='3.5')
+    # def test_positional_only_parameters(self):
+    #     ast = raw_building.ast_from_object(issubclass)
+    #     self.assertEqual(len(ast.args.positional_only), 2)
+    #     for name, arg in zip(('cls', 'class_or_tuple'), ast.args.positional_only):
+    #         self.assertEqual(arg.name, name)
 
 
 if __name__ == '__main__':
