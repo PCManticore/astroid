@@ -130,6 +130,7 @@ class Arguments(base.AssignTypeMixin, base.NodeNG):
         self.positional_only = positional_only
         self.positional_and_keyword = self.args + self.positional_only
 
+    @property
     def fromlineno(self):
         # Let the Function's lineno be the lineno for this.
         if self.parent.fromlineno:
@@ -509,6 +510,7 @@ class ExceptHandler(base.AssignTypeMixin, Statement):
         self.name = name
         self.body = body
 
+    @property
     def blockstart_tolineno(self):
         if self.name:
             return self.name.tolineno
@@ -564,6 +566,7 @@ class For(base.BlockRangeMixIn, base.AssignTypeMixin,
 
     optional_assign = True
 
+    @property
     def blockstart_tolineno(self):
         return self.iter.tolineno
 
@@ -629,6 +632,7 @@ class If(base.BlockRangeMixIn, Statement):
         self.body = body
         self.orelse = orelse
 
+    @property
     def blockstart_tolineno(self):
         return self.test.tolineno
 
@@ -896,6 +900,7 @@ class While(base.BlockRangeMixIn, Statement):
         self.body = body
         self.orelse = orelse
 
+    @property
     def blockstart_tolineno(self):
         return self.test.tolineno
 
@@ -918,6 +923,7 @@ class With(base.BlockRangeMixIn, base.AssignTypeMixin,
         self.items = items
         self.body = body
 
+    @property
     def blockstart_tolineno(self):
         return self.items[-1].context_expr.tolineno
 
@@ -1242,6 +1248,7 @@ class FunctionDef(LambdaFunctionMixin, Statement):
         self.decorators = decorators
         self.returns = returns
 
+    @property
     def fromlineno(self):
         # lineno is the line number of the first decorator, we want the def
         # statement lineno
@@ -1252,6 +1259,7 @@ class FunctionDef(LambdaFunctionMixin, Statement):
 
         return lineno
 
+    @property
     def blockstart_tolineno(self):
         return self.args.tolineno
 
@@ -1293,6 +1301,7 @@ class ClassDef(QualifiedNameMixin, base.FilterStmtsMixin, Statement):
         self.body = body
         self.decorators = decorators
 
+    @property
     def blockstart_tolineno(self):
         if self.bases:
             return self.bases[-1].tolineno

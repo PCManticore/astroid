@@ -224,9 +224,11 @@ class NodeNG(object):
     # these are lazy because they're relatively expensive to compute for every
     # single node, and they rarely get looked at
 
+    @property
     def fromlineno(self):
         return self.lineno
 
+    @property
     def tolineno(self):
         if not self._astroid_fields:
             # can't have children
@@ -382,6 +384,7 @@ class NodeNG(object):
 class BlockRangeMixIn(object):
     """override block range """
 
+    @property
     def blockstart_tolineno(self):
         return self.lineno
 
