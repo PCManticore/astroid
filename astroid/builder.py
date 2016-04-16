@@ -32,6 +32,7 @@ from astroid import manager
 from astroid import modutils
 from astroid.tree import rebuilder
 from astroid.tree import treeabc
+from astroid.tree import zipper
 from astroid import util
 
 raw_building = util.lazy_import('raw_building')
@@ -133,6 +134,7 @@ class AstroidBuilder(object):
     def _post_build(self, module, encoding):
         """Handles encoding and delayed nodes after a module has been built"""
         module.file_encoding = encoding
+        module = zipper.Zipper(module)
         self._manager.cache_module(module)
 
         # Visit the transforms

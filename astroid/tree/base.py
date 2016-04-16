@@ -34,6 +34,10 @@ from astroid import util
 inference = util.lazy_import('inference')
 
 
+# The maximum number of characters to print for a field in a string
+# representation of a node.
+FIELD_CHARACTERS_LIMIT = 160
+
 @util.register_implementation(treeabc.NodeNG)
 class NodeNG(object):
     """Base Class for all Astroid node classes.
@@ -61,6 +65,26 @@ class NodeNG(object):
         self.lineno = lineno
         self.col_offset = col_offset
         self.parent = parent
+ 
+    def __iter__(self):
+        for field in self._astroid_fields:
+            yield getattr(self, field)
+
+    # def __eq__(self, other):
+    #     if self.__class__ is other.__class__:
+    #         return (all(getattr(self, f) == getattr(other, f)
+    #                    for f in self._astroid_fields) and
+    #                 all(getattr(self, f) == getattr(other, f)
+    #                     for f in self._other_fields))
+    #     else:
+    #         return False
+
+    # def __ne__(self, other):
+    #     return not self == other
+
+    # # Must be defined to retain object.__hash__, see
+    # # https://docs.python.org/3/reference/datamodel.html#object.__hash__
+    # __hash__ = object.__hash__
 
     def _repr_name(self):
         """return self.name or self.attrname or '' for nice representation"""
@@ -82,6 +106,10 @@ class NodeNG(object):
             lines = pprint.pformat(value, indent=2,
                                    width=width).splitlines(True)
 
+            # Some fields, notably source_code for Module nodes, are
+            # too long to display comfortably, so this limits them.
+            if len(lines[0]) > FIELD_CHARACTERS_LIMIT:
+                lines[0] = lines[0][:160] + '...'
             inner = [lines[0]]
             for line in lines[1:]:
                 inner.append(' ' * alignment + line)
@@ -309,7 +337,7 @@ class NodeNG(object):
         def _repr_node(node, result, done, cur_indent='', depth=1):
             """Outputs a strings representation of an astroid node."""
             if node in done:
-                result.append(indent + '<Recursion on %s with id=%s' %
+                result.append('<Recursion on %s with id=%s' %
                               (type(node).__name__, id(node)))
                 return False
             else:
