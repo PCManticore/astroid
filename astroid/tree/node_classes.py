@@ -1124,15 +1124,15 @@ class ComprehensionScope(lookup.LocalsDictNode):
 
 class GeneratorExp(ComprehensionScope):
     _astroid_fields = ('elt', 'generators')
-    elt = node_classes.Empty
-    generators = node_classes.Empty
+    elt = Empty
+    generators = Empty
 
     def __init__(self, lineno=None, col_offset=None, parent=None):
         super(GeneratorExp, self).__init__(lineno, col_offset, parent)
 
-    def postinit(self, elt=node_classes.Empty, generators=node_classes.Empty):
+    def postinit(self, elt=Empty, generators=Empty):
         self.elt = elt
-        if generators is node_classes.Empty:
+        if generators is Empty:
             self.generators = []
         else:
             self.generators = generators
@@ -1140,17 +1140,17 @@ class GeneratorExp(ComprehensionScope):
 
 class DictComp(ComprehensionScope):
     _astroid_fields = ('key', 'value', 'generators')
-    key = node_classes.Empty
-    value = node_classes.Empty
-    generators = node_classes.Empty
+    key = Empty
+    value = Empty
+    generators = Empty
 
     def __init__(self, lineno=None, col_offset=None, parent=None):
         super(DictComp, self).__init__(lineno, col_offset, parent)
 
-    def postinit(self, key=node_classes.Empty, value=node_classes.Empty, generators=node_classes.Empty):
+    def postinit(self, key=Empty, value=Empty, generators=Empty):
         self.key = key
         self.value = value
-        if generators is node_classes.Empty:
+        if generators is Empty:
             self.generators = []
         else:
             self.generators = generators
@@ -1160,15 +1160,15 @@ class SetComp(ComprehensionScope):
     _astroid_fields = ('elt', 'generators')
     elt = None
     generators = None
-    elt = node_classes.Empty
-    generators = node_classes.Empty
+    elt = Empty
+    generators = Empty
 
     def __init__(self, lineno=None, col_offset=None, parent=None):
         super(SetComp, self).__init__(lineno, col_offset, parent)
 
-    def postinit(self, elt=node_classes.Empty, generators=node_classes.Empty):
+    def postinit(self, elt=Empty, generators=Empty):
         self.elt = elt
-        if generators is node_classes.Empty:
+        if generators is Empty:
             self.generators = []
         else:
             self.generators = generators
@@ -1177,10 +1177,10 @@ class SetComp(ComprehensionScope):
 class _ListComp(treebase.NodeNG):
     """class representing a ListComp node"""
     _astroid_fields = ('elt', 'generators')
-    elt = node_classes.Empty
-    generators = node_classes.Empty
+    elt = Empty
+    generators = Empty
 
-    def postinit(self, elt=node_classes.Empty, generators=node_classes.Empty):
+    def postinit(self, elt=Empty, generators=Empty):
         self.elt = elt
         self.generators = generators
 
@@ -1251,7 +1251,7 @@ class FunctionDef(LambdaFunctionMixin, lookup.LocalsDictNode,
     else:
         _astroid_fields = ('decorators', 'args', 'body')
     _other_fields = ('name', 'doc')
-    decorators = node_classes.Empty
+    decorators = Empty
 
     def __init__(self, name=None, doc=None, lineno=None,
                  col_offset=None, parent=None):
@@ -1259,7 +1259,7 @@ class FunctionDef(LambdaFunctionMixin, lookup.LocalsDictNode,
         self.doc = doc
         super(FunctionDef, self).__init__(lineno, col_offset, parent)
 
-    def postinit(self, args, body, decorators=node_classes.Empty, returns=node_classes.Empty):
+    def postinit(self, args, body, decorators=Empty, returns=Empty):
         self.args = args
         self.body = body
         self.decorators = decorators
@@ -1305,7 +1305,7 @@ class ClassDef(QualifiedNameMixin, base.FilterStmtsMixin,
 
     _astroid_fields = ('decorators', 'bases', 'body')
     _other_fields = ('name', 'doc')
-    decorators = node_classes.Empty
+    decorators = Empty
 
     def __init__(self, name=None, doc=None, lineno=None,
                  col_offset=None, parent=None):
