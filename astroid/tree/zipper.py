@@ -17,12 +17,11 @@ import collections
 # time an AST node method has to be accessed through a new zipper.
 import wrapt
 
-from astroid import context
 from astroid import exceptions
-from astroid import inference
-from astroid.interpreter import scope
+# from astroid.interpreter import scope
 from astroid.tree import base
-from astroid.tree import treeabc
+# from astroid.tree import treeabc
+from astroid.tree import node_classes
 
 
 # The following are helper functions for working with singly-linked
@@ -253,7 +252,7 @@ class Zipper(wrapt.ObjectProxy):
             # This is a kludge to work around the problem of two Empty
             # nodes in different parts of an AST.  Empty nodes can
             # never be ancestors, so they can be safely skipped.
-            if self_ancestor is other_ancestor and not isinstance(self_ancestor, treeabc.Empty):
+            if self_ancestor is other_ancestor and not isinstance(self_ancestor, node_classes.Empty):
                 ancestor = self_ancestor
             else:
                 break
@@ -435,8 +434,8 @@ class Zipper(wrapt.ObjectProxy):
         location = self
         while (location is not None and 
                not isinstance(location.__wrapped__,
-                              (treeabc.FunctionDef, treeabc.Lambda,
-                               treeabc.ClassDef, treeabc.Module))):
+                              (node_classes.FunctionDef, node_classes.Lambda,
+                               node_classes.ClassDef, node_classes.Module))):
             location = location.up()
         return location
 
@@ -465,16 +464,16 @@ class Zipper(wrapt.ObjectProxy):
 
         return context.cache_generator(key, inference.infer(self, context, **kwargs))
 
-    def scope(self):
-        """Get the first node defining a new scope
+    # def scope(self):
+    #     """Get the first node defining a new scope
 
-        Scopes are introduced in Python 3 by Module, FunctionDef,
-        ClassDef, Lambda, GeneratorExp, and comprehension nodes.  On
-        Python 2, the same is true except that list comprehensions
-        don't generate a new scope.
+    #     Scopes are introduced in Python 3 by Module, FunctionDef,
+    #     ClassDef, Lambda, GeneratorExp, and comprehension nodes.  On
+    #     Python 2, the same is true except that list comprehensions
+    #     don't generate a new scope.
 
-        """
-        return scope.node_scope(self)
+    #     """
+    #     return scope.node_scope(self)
 
     def statement(self):
         '''Go to the first ancestor of the focus that's a Statement.
@@ -483,6 +482,6 @@ class Zipper(wrapt.ObjectProxy):
         location = self
         while (location is not None and 
                not isinstance(location.__wrapped__,
-                              (treeabc.Module, treeabc.Statement))):
+                              (node_classes.Module, node_classes.Statement))):
             location = location.up()
         return location

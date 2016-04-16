@@ -24,20 +24,12 @@ import sys
 
 import six
 
-from astroid import context as contextmod
-from astroid import decorators
 from astroid import exceptions
-from astroid import inference
-from astroid.interpreter import runtimeabc
-from astroid.interpreter import objects
 from astroid import manager
-from astroid import protocols
 from astroid.tree import base
-from astroid.tree import treeabc
 from astroid import util
 
 
-@util.register_implementation(treeabc.Statement)
 class Statement(base.NodeNG):
     """Statement node adding a few attributes"""
     is_statement = True
@@ -60,8 +52,8 @@ class Statement(base.NodeNG):
 
 
 
-class BaseAssignName(base.LookupMixIn, base.ParentAssignTypeMixin,
-                     AssignedStmtsMixin, base.NodeNG):
+class BaseAssignName(base.ParentAssignTypeMixin,
+                     base.NodeNG):
     _other_fields = ('name',)
 
     def __init__(self, name=None, lineno=None, col_offset=None, parent=None):
@@ -85,7 +77,6 @@ class Empty(base.NodeNG):
     __nonzero__ = __bool__
 
 
-@util.register_implementation(treeabc.AssignName)
 class AssignName(BaseAssignName):
     """class representing an AssignName node"""
 
@@ -104,7 +95,7 @@ class Parameter(BaseAssignName):
         self.annotation = annotation
 
 
-class DelName(base.LookupMixIn, base.ParentAssignTypeMixin, base.NodeNG):
+class DelName(base.ParentAssignTypeMixin, base.NodeNG):
     """class representing a DelName node"""
     _other_fields = ('name',)
 
@@ -113,7 +104,7 @@ class DelName(base.LookupMixIn, base.ParentAssignTypeMixin, base.NodeNG):
         super(DelName, self).__init__(lineno, col_offset, parent)
 
 
-class Name(base.LookupMixIn, base.NodeNG):
+class Name(base.NodeNG):
     """class representing a Name node"""
     _other_fields = ('name',)
 
@@ -122,7 +113,7 @@ class Name(base.LookupMixIn, base.NodeNG):
         super(Name, self).__init__(lineno, col_offset, parent)
     
 
-class Arguments(base.AssignTypeMixin, AssignedStmtsMixin, base.NodeNG):
+class Arguments(base.AssignTypeMixin, base.NodeNG):
     """class representing an Arguments node"""
 
     _astroid_fields = ('args', 'vararg', 'kwarg', 'keyword_only', 'positional_only')
@@ -139,7 +130,6 @@ class Arguments(base.AssignTypeMixin, AssignedStmtsMixin, base.NodeNG):
         self.positional_only = positional_only
         self.positional_and_keyword = self.args + self.positional_only
 
-    @decorators.cachedproperty
     def fromlineno(self):
         # Let the Function's lineno be the lineno for this.
         if self.parent.fromlineno:
@@ -232,7 +222,7 @@ class Arguments(base.AssignTypeMixin, AssignedStmtsMixin, base.NodeNG):
 
 
 class AssignAttr(base.ParentAssignTypeMixin,
-                 AssignedStmtsMixin, base.NodeNG):
+                 base.NodeNG):
     """class representing an AssignAttr node"""
     _astroid_fields = ('expr',)
     _other_fields = ('attrname',)
@@ -257,7 +247,7 @@ class Assert(Statement):
         self.test = test
 
 
-class Assign(base.AssignTypeMixin, AssignedStmtsMixin, Statement):
+class Assign(base.AssignTypeMixin, Statement):
     """class representing an Assign node"""
     _astroid_fields = ('targets', 'value',)
     targets = Empty
@@ -268,7 +258,7 @@ class Assign(base.AssignTypeMixin, AssignedStmtsMixin, Statement):
         self.value = value
 
 
-class AugAssign(base.AssignTypeMixin, AssignedStmtsMixin, Statement):
+class AugAssign(base.AssignTypeMixin, Statement):
     """class representing an AugAssign node"""
     _astroid_fields = ('target', 'value')
     _other_fields = ('op',)
@@ -377,7 +367,7 @@ class Compare(base.NodeNG):
         return self.comparators[-1]
 
 
-class Comprehension(AssignedStmtsMixin, base.NodeNG):
+class Comprehension(base.NodeNG):
     """class representing a Comprehension node"""
     _astroid_fields = ('target', 'iter', 'ifs')
     target = Empty
@@ -397,7 +387,7 @@ class Comprehension(AssignedStmtsMixin, base.NodeNG):
         return self
 
 
-class Const(base.NodeNG, objects.BaseInstance):
+class Const(base.NodeNG):
     """represent a constant node like num, str, bytes"""
     _other_fields = ('value',)
 
@@ -406,7 +396,6 @@ class Const(base.NodeNG, objects.BaseInstance):
         super(Const, self).__init__(lineno, col_offset, parent)
 
     
-@util.register_implementation(treeabc.NameConstant)
 class NameConstant(Const):
     """Represents a builtin singleton, at the moment True, False, None,
     and NotImplemented.
@@ -508,7 +497,7 @@ class Ellipsis(base.NodeNG): # pylint: disable=redefined-builtin
     """class representing an Ellipsis node"""
 
 
-class ExceptHandler(base.AssignTypeMixin, AssignedStmtsMixin, Statement):
+class ExceptHandler(base.AssignTypeMixin, Statement):
     """class representing an ExceptHandler node"""
     _astroid_fields = ('type', 'name', 'body',)
     type = Empty
@@ -520,7 +509,6 @@ class ExceptHandler(base.AssignTypeMixin, AssignedStmtsMixin, Statement):
         self.name = name
         self.body = body
 
-    @decorators.cachedproperty
     def blockstart_tolineno(self):
         if self.name:
             return self.name.tolineno
@@ -560,7 +548,7 @@ class ExtSlice(base.NodeNG):
 
 
 class For(base.BlockRangeMixIn, base.AssignTypeMixin,
-          AssignedStmtsMixin, Statement):
+          Statement):
     """class representing a For node"""
     _astroid_fields = ('target', 'iter', 'body', 'orelse',)
     target = Empty
@@ -641,7 +629,6 @@ class If(base.BlockRangeMixIn, Statement):
         self.body = body
         self.orelse = orelse
 
-    @decorators.cachedproperty
     def blockstart_tolineno(self):
         return self.test.tolineno
 
@@ -655,7 +642,6 @@ class If(base.BlockRangeMixIn, Statement):
                                        self.body[0].fromlineno - 1)
 
 
-@util.register_implementation(treeabc.IfExp)
 class IfExp(base.NodeNG):
     """class representing an IfExp node"""
     _astroid_fields = ('test', 'body', 'orelse')
@@ -669,7 +655,6 @@ class IfExp(base.NodeNG):
         self.orelse = orelse
 
 
-@util.register_implementation(treeabc.Import)
 class Import(base.FilterStmtsMixin, Statement):
     """class representing an Import node"""
     _other_fields = ('names',)
@@ -679,7 +664,6 @@ class Import(base.FilterStmtsMixin, Statement):
         super(Import, self).__init__(lineno, col_offset, parent)
 
 
-@util.register_implementation(treeabc.Index)
 class Index(base.NodeNG):
     """class representing an Index node"""
     _astroid_fields = ('value',)
@@ -689,7 +673,6 @@ class Index(base.NodeNG):
         self.value = value
 
 
-@util.register_implementation(treeabc.Keyword)
 class Keyword(base.NodeNG):
     """class representing a Keyword node"""
     _astroid_fields = ('value',)
@@ -704,7 +687,7 @@ class Keyword(base.NodeNG):
         self.value = value
 
 
-class List(base.BaseContainer, AssignedStmtsMixin, objects.BaseInstance):
+class List(base.BaseContainer):
     """class representing a List node"""
     _other_fields = ('ctx',)
 
@@ -782,7 +765,7 @@ class Return(Statement):
 
 
 # TODO: check BaseCOntainer
-class Set(base.BaseContainer, objects.BaseInstance):
+class Set(base.BaseContainer):
     """class representing a Set node"""
     
 
@@ -799,7 +782,7 @@ class Slice(base.NodeNG):
         self.step = step
 
 
-class Starred(base.ParentAssignTypeMixin, AssignedStmtsMixin, base.NodeNG):
+class Starred(base.ParentAssignTypeMixin, base.NodeNG):
     """class representing a Starred node"""
     _astroid_fields = ('value',)
     _other_fields = ('ctx', )
@@ -856,7 +839,6 @@ class TryExcept(base.BlockRangeMixIn, Statement):
         return self._elsed_block_range(lineno, self.orelse, last)
 
 
-@util.register_implementation(treeabc.TryFinally)
 class TryFinally(base.BlockRangeMixIn, Statement):
     """class representing a TryFinally node"""
     _astroid_fields = ('body', 'finalbody',)
@@ -877,7 +859,7 @@ class TryFinally(base.BlockRangeMixIn, Statement):
         return self._elsed_block_range(lineno, self.finalbody)
 
 
-class Tuple(base.BaseContainer, AssignedStmtsMixin, objects.BaseInstance):
+class Tuple(base.BaseContainer):
     """class representing a Tuple node"""
 
     _other_fields = ('ctx',)
@@ -914,7 +896,6 @@ class While(base.BlockRangeMixIn, Statement):
         self.body = body
         self.orelse = orelse
 
-    @decorators.cachedproperty
     def blockstart_tolineno(self):
         return self.test.tolineno
 
@@ -924,7 +905,7 @@ class While(base.BlockRangeMixIn, Statement):
 
 
 class With(base.BlockRangeMixIn, base.AssignTypeMixin,
-           AssignedStmtsMixin, Statement):
+           Statement):
     """class representing a With node"""
     _astroid_fields = ('items', 'body')
 
@@ -937,12 +918,11 @@ class With(base.BlockRangeMixIn, base.AssignTypeMixin,
         self.items = items
         self.body = body
 
-    @decorators.cachedproperty
     def blockstart_tolineno(self):
         return self.items[-1].context_expr.tolineno
 
 
-class WithItem(base.ParentAssignTypeMixin, AssignedStmtsMixin, base.NodeNG):
+class WithItem(base.ParentAssignTypeMixin, base.NodeNG):
     _astroid_fields = ('context_expr', 'optional_vars')
     context_expr = Empty
     optional_vars = Empty
@@ -982,7 +962,7 @@ class QualifiedNameMixin(object):
         return '%s.%s' % (node.parent.frame().qname(), node.name)
 
 
-class Module(QualifiedNameMixin, lookup.LocalsDictNode):
+class Module(QualifiedNameMixin):
     _astroid_fields = ('body',)
 
     fromlineno = 0
@@ -1019,12 +999,12 @@ class Module(QualifiedNameMixin, lookup.LocalsDictNode):
         # statements.  This doesn't try to test for incorrect ASTs,
         # but should function on all correct ones.
         while (index < len(self.body)):
-            if (isinstance(self.body[index], node_classes.ImportFrom)
+            if (isinstance(self.body[index], ImportFrom)
                 and self.body[index].modname == '__future__'):
                 # This is a `from __future__ import` statement.
                 future_imports.extend(n[0] for n in getattr(self.body[index],
                                                             'names', ()))
-            elif (index == 0 and isinstance(self.body[0], node_classes.Expr)):
+            elif (index == 0 and isinstance(self.body[0], Expr)):
                 # This is a docstring, so do nothing.
                 pass
             else:
@@ -1074,7 +1054,6 @@ class Module(QualifiedNameMixin, lookup.LocalsDictNode):
         return
 
     if six.PY2:
-        @decorators_mod.cachedproperty
         def _absolute_import_activated(self):
             return 'absolute_import' in self.future_imports
     else:
@@ -1116,7 +1095,7 @@ class Module(QualifiedNameMixin, lookup.LocalsDictNode):
         return [name for name in self.keys() if not name.startswith('_')]
 
 
-class ComprehensionScope(lookup.LocalsDictNode):
+class ComprehensionScope(base.NodeNG):
 
     def frame(self):
         return self.parent.frame()
@@ -1174,7 +1153,7 @@ class SetComp(ComprehensionScope):
             self.generators = generators
 
 
-class _ListComp(treebase.NodeNG):
+class _ListComp(base.NodeNG):
     """class representing a ListComp node"""
     _astroid_fields = ('elt', 'generators')
     elt = Empty
@@ -1220,15 +1199,14 @@ def _rec_get_names(args, names=None):
     if names is None:
         names = []
     for arg in args:
-        if isinstance(arg, node_classes.Tuple):
+        if isinstance(arg, Tuple):
             _rec_get_names(arg.elts, names)
         else:
             names.append(arg.name)
     return names
 
 
-@util.register_implementation(treeabc.Lambda)
-class Lambda(LambdaFunctionMixin, lookup.LocalsDictNode):
+class Lambda(LambdaFunctionMixin):
     _astroid_fields = ('args', 'body',)
 
     def __init__(self, lineno=None, col_offset=None, parent=None):
@@ -1242,8 +1220,7 @@ class Lambda(LambdaFunctionMixin, lookup.LocalsDictNode):
 
 
 # TODO: what baseclasses to keep?
-class FunctionDef(LambdaFunctionMixin, lookup.LocalsDictNode,
-                  node_classes.Statement):
+class FunctionDef(LambdaFunctionMixin, Statement):
 
     # TODO: this should look the same
     if six.PY3:
@@ -1265,7 +1242,6 @@ class FunctionDef(LambdaFunctionMixin, lookup.LocalsDictNode,
         self.decorators = decorators
         self.returns = returns
 
-    @decorators_mod.cachedproperty
     def fromlineno(self):
         # lineno is the line number of the first decorator, we want the def
         # statement lineno
@@ -1276,7 +1252,6 @@ class FunctionDef(LambdaFunctionMixin, lookup.LocalsDictNode,
 
         return lineno
 
-    @decorators_mod.cachedproperty
     def blockstart_tolineno(self):
         return self.args.tolineno
 
@@ -1289,7 +1264,7 @@ class FunctionDef(LambdaFunctionMixin, lookup.LocalsDictNode,
 
     def is_generator(self):
         """return true if this is a generator function"""
-        yield_nodes = (node_classes.Yield, node_classes.YieldFrom)
+        yield_nodes = (Yield, YieldFrom)
         return next(self.nodes_of_class(yield_nodes,
                                         skip_klass=(FunctionDef, Lambda)), False)
 
@@ -1299,9 +1274,7 @@ class AsyncFunctionDef(FunctionDef):
 
 
 # TODO: what base classes to keep?
-class ClassDef(QualifiedNameMixin, base.FilterStmtsMixin,
-               lookup.LocalsDictNode,
-               node_classes.Statement):
+class ClassDef(QualifiedNameMixin, base.FilterStmtsMixin, Statement):
 
     _astroid_fields = ('decorators', 'bases', 'body')
     _other_fields = ('name', 'doc')
@@ -1320,7 +1293,6 @@ class ClassDef(QualifiedNameMixin, base.FilterStmtsMixin,
         self.body = body
         self.decorators = decorators
 
-    @decorators_mod.cachedproperty
     def blockstart_tolineno(self):
         if self.bases:
             return self.bases[-1].tolineno

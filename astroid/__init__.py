@@ -59,7 +59,6 @@ del _Context
 
 # pylint: disable=redefined-builtin, wildcard-import
 
-from astroid.interpreter.objects import Instance, BoundMethod, UnboundMethod
 # make a manager instance (borg) accessible from astroid package
 from astroid.manager import AstroidManager
 MANAGER = AstroidManager()
@@ -71,16 +70,7 @@ from astroid.exceptions import *
 # make all node classes accessible from astroid package
 from astroid.nodes import *
 
-# trigger extra monkey-patching
-from astroid import inference
-
-from astroid import raw_building
-# Cache the builtins AST
-raw_building.ast_from_builtins()
-from astroid.interpreter.util import are_exclusive, unpack_infer
-from astroid.interpreter.lookup import builtin_lookup
 from astroid.builder import parse
-from astroid.util import Uninferable, YES
 
 # TODO
 # from astroid.tree import zipper
@@ -137,16 +127,3 @@ def register_module_extender(manager, module_name, get_extension_mod):
                 module.body.append(statement)
 
     manager.register_transform(Module, transform, lambda n: n.name == module_name)
-
-
-# load brain plugins
-from os import listdir
-from os.path import join, dirname
-BRAIN_MODULES_DIR = join(dirname(__file__), 'brain')
-if BRAIN_MODULES_DIR not in sys.path:
-    # add it to the end of the list so user path take precedence
-    sys.path.append(BRAIN_MODULES_DIR)
-# load modules in this directory
-for module in listdir(BRAIN_MODULES_DIR):
-    if module.endswith('.py'):
-        importlib.import_module(module[:-3])

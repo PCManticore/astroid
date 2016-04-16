@@ -47,20 +47,15 @@ from astroid.tree.node_classes import (
     WithItem, Yield, YieldFrom, AsyncFor, Await, AsyncWith,
     # Node not present in the builtin ast module.
     DictUnpack,
-    # Special nodes for building from live objects.
-    InterpreterObject, ReservedName, Unknown
-)
-from astroid.tree.scoped_nodes import (
     Module, GeneratorExp, Lambda, DictComp,
     ListComp, SetComp, FunctionDef, ClassDef,
     AsyncFunctionDef,
+    # Special nodes for building from live objects.
+    # InterpreterObject, ReservedName, Unknown, 
 )
-
-
 
 ALL_NODE_CLASSES = (
     AsyncFunctionDef, AsyncFor, AsyncWith, Await,
-
     Arguments, AssignAttr, Assert, Assign, AssignName, AugAssign,
     Repr, BinOp, BoolOp, Break,
     Call, ClassDef, Compare, Comprehension, Const, Continue,
@@ -69,16 +64,16 @@ ALL_NODE_CLASSES = (
     Ellipsis, ExceptHandler, Exec, ExtSlice,
     For, ImportFrom, FunctionDef,
     Attribute, GeneratorExp, Global,
-    If, IfExp, Import, Index, InterpreterObject,
+    If, IfExp, Import, Index, # InterpreterObject, 
     Keyword,
     Lambda, List, ListComp,
     Name, NameConstant, Nonlocal,
     Module,
     Parameter, Pass, Print,
-    Raise, ReservedName, Return,
+    Raise, Return, # ReservedName, 
     Set, SetComp, Slice, Starred, Subscript,
     TryExcept, TryFinally, Tuple,
-    UnaryOp, Unknown,
+    UnaryOp, # Unknown,
     While, With, WithItem,
     Yield, YieldFrom,
     )

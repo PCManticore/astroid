@@ -23,22 +23,14 @@ import warnings
 import six
 
 from astroid import as_string
-from astroid import context
-from astroid import decorators
 from astroid import exceptions
-from astroid.interpreter import scope
-from astroid.interpreter import util as interpreterutil
-from astroid.tree import treeabc
 from astroid import util
-
-inference = util.lazy_import('inference')
 
 
 # The maximum number of characters to print for a field in a string
 # representation of a node.
 FIELD_CHARACTERS_LIMIT = 160
 
-@util.register_implementation(treeabc.NodeNG)
 class NodeNG(object):
     """Base Class for all Astroid node classes.
 
@@ -232,11 +224,9 @@ class NodeNG(object):
     # these are lazy because they're relatively expensive to compute for every
     # single node, and they rarely get looked at
 
-    @decorators.cachedproperty
     def fromlineno(self):
         return self.lineno
 
-    @decorators.cachedproperty
     def tolineno(self):
         if not self._astroid_fields:
             # can't have children
@@ -392,7 +382,6 @@ class NodeNG(object):
 class BlockRangeMixIn(object):
     """override block range """
 
-    @decorators.cachedproperty
     def blockstart_tolineno(self):
         return self.lineno
 

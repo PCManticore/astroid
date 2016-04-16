@@ -27,15 +27,11 @@ import sys
 import textwrap
 
 from astroid import exceptions
-from astroid.interpreter import runtimeabc
 from astroid import manager
 from astroid import modutils
 from astroid.tree import rebuilder
-from astroid.tree import treeabc
 from astroid.tree import zipper
 from astroid import util
-
-raw_building = util.lazy_import('raw_building')
 
 
 def _parse(string):

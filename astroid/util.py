@@ -35,6 +35,9 @@ try:
 except ImportError:
     from singledispatch import singledispatch as _singledispatch
 
+def lazy_import(module_name):
+    return lazy_object_proxy.Proxy(
+        lambda: importlib.import_module('.' + module_name, 'astroid'))
 
 def singledispatch(func):
     '''Modified singledispatch decorator that doesn't crash on old-style classes.
