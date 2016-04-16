@@ -62,31 +62,6 @@ class NodeNG(object):
         self.col_offset = col_offset
         self.parent = parent
 
-    def infer(self, context=None, **kwargs):
-        """main interface to the interface system, return a generator on inferred
-        values.
-
-        If the instance has some explicit inference function set, it will be
-        called instead of the default interface.
-        """
-        if self._explicit_inference is not None:
-            # explicit_inference is not bound, give it self explicitly
-            try:
-                # pylint: disable=not-callable
-                return self._explicit_inference(self, context, **kwargs)
-            except exceptions.UseInferenceDefault:
-                pass
-
-        if not context:
-            return inference.infer(self, context, **kwargs)
-
-        key = (self, context.lookupname,
-               context.callcontext, context.boundnode)
-        if key in context.inferred:
-            return iter(context.inferred[key])
-
-        return context.cache_generator(key, inference.infer(self, context, **kwargs))
-
     def _repr_name(self):
         """return self.name or self.attrname or '' for nice representation"""
         return getattr(self, 'name', getattr(self, 'attrname', ''))
@@ -250,10 +225,6 @@ class NodeNG(object):
         """
         return lineno, self.tolineno
 
-    def set_local(self, name, stmt):
-        """delegate to a scoped parent handling a locals dictionary"""
-        self.parent.set_local(name, stmt)
-
     def nodes_of_class(self, klass, skip_klass=None):
         """return an iterator on nodes which are instance of the given class(es)
 
@@ -267,45 +238,6 @@ class NodeNG(object):
             for matching in child_node.nodes_of_class(klass, skip_klass):
                 yield matching
 
-    def _infer_name(self, frame, name):
-        # overridden for ImportFrom, Import, Global, TryExcept and Arguments
-        return None
-
-    def _infer(self, context=None):
-        """we don't know how to resolve a statement by default"""
-        # this method is overridden by most concrete classes
-        raise exceptions.InferenceError(self.__class__.__name__)
-
-    def inferred(self):
-        '''return list of inferred values for a more simple inference usage'''
-        return list(self.infer())
-
-    def infered(self):
-        warnings.warn('%s.infered() is deprecated and slated for removal '
-                      'in astroid 2.0, use %s.inferred() instead.'
-                      % (type(self).__name__, type(self).__name__),
-                      PendingDeprecationWarning, stacklevel=2)
-        return self.inferred()
-
-    def instantiate_class(self):
-        """instanciate a node if it is a ClassDef node, else return self"""
-        return self
-
-    def instanciate_class(self):
-        warnings.warn('%s.instanciate_class() is deprecated and slated for '
-                      ' removal in astroid 2.0, use %s.instantiate_class() '
-                      ' instead.' % (type(self).__name__, type(self).__name__),
-                      PendingDeprecationWarning, stacklevel=2)
-        return self.instantiate_class()
-
-    def has_base(self, node):
-        return False
-
-    def callable(self):
-        return False
-
-    def eq(self, value):
-        return False
 
     def as_string(self):
         return as_string.to_code(self)
@@ -428,23 +360,6 @@ class NodeNG(object):
         """Shortcut method to print the result of repr_tree()."""
         print(self.repr_tree(*args, **kws))
 
-    def bool_value(self):
-        """Determine the bool value of this node
-
-        The boolean value of a node can have three
-        possible values:
-
-            * False. For instance, empty data structures,
-              False, empty strings, instances which return
-              explicitly False from the __nonzero__ / __bool__
-              method.
-            * True. Most of constructs are True by default:
-              classes, functions, modules etc
-            * Uninferable: the inference engine is uncertain of the
-              node's value.
-        """
-        return util.Uninferable
-
 
 class BlockRangeMixIn(object):
     """override block range """
@@ -469,32 +384,15 @@ class BlockRangeMixIn(object):
 class FilterStmtsMixin(object):
     """Mixin for statement filtering and assignment type"""
 
-    def _get_filtered_stmts(self, _, node, _stmts, mystmt):
-        """method used in _filter_stmts to get statemtents and trigger break"""
-        if self.statement() is mystmt:
-            # original node's statement is the assignment, only keep
-            # current node (gen exp, list comp)
-            return [node], True
-        return _stmts, False
-
     def assign_type(self):
         return self
 
 
+# TODO: can be single dispatched
 class AssignTypeMixin(object):
 
     def assign_type(self):
         return self
-
-    def _get_filtered_stmts(self, lookup_node, node, _stmts, mystmt):
-        """method used in filter_stmts"""
-        if self is mystmt:
-            return _stmts, True
-        if self.statement() is mystmt:
-            # original node's statement is the assignment, only keep
-            # current node (gen exp, list comp)
-            return [node], True
-        return _stmts, False
 
 
 class ParentAssignTypeMixin(AssignTypeMixin):
@@ -502,149 +400,6 @@ class ParentAssignTypeMixin(AssignTypeMixin):
     def assign_type(self):
         return self.parent.assign_type()
 
-
-class LookupMixIn(object):
-    """Mixin looking up a name in the right scope
-    """
-
-    def lookup(self, name):
-        """lookup a variable name
-
-        return the scope node and the list of assignments associated to the
-        given name according to the scope where it has been found (locals,
-        globals or builtin)
-
-        The lookup is starting from self's scope. If self is not a frame itself
-        and the name is found in the inner frame locals, statements will be
-        filtered to remove ignorable statements according to self's location
-        """
-        return self.scope().scope_lookup(self, name)
-
-    def ilookup(self, name):
-        """inferred lookup
-
-        return an iterator on inferred values of the statements returned by
-        the lookup method
-        """
-        frame, stmts = self.lookup(name)
-        return interpreterutil.infer_stmts(stmts, context.InferenceContext(), frame)
-
-    def _filter_stmts(self, stmts, frame, offset):
-        """filter statements to remove ignorable statements.
-
-        If self is not a frame itself and the name is found in the inner
-        frame locals, statements will be filtered to remove ignorable
-        statements according to self's location
-        """
-        # if offset == -1, my actual frame is not the inner frame but its parent
-        #
-        # class A(B): pass
-        #
-        # we need this to resolve B correctly
-        if offset == -1:
-            myframe = self.frame().parent.frame()
-        else:
-            myframe = self.frame()
-            # If the frame of this node is the same as the statement
-            # of this node, then the node is part of a class or
-            # a function definition and the frame of this node should be the
-            # the upper frame, not the frame of the definition.
-            # For more information why this is important,
-            # see Pylint issue #295.
-            # For example, for 'b', the statement is the same
-            # as the frame / scope:
-            #
-            # def test(b=1):
-            #     ...
-
-            if self.statement() is myframe and myframe.parent:
-                myframe = myframe.parent.frame()
-
-        mystmt = self.statement()
-        # line filtering if we are in the same frame
-        #
-        # take care node may be missing lineno information (this is the case for
-        # nodes inserted for living objects)
-        if myframe is frame and mystmt.fromlineno is not None:
-            mylineno = mystmt.fromlineno + offset
-        else:
-            # disabling lineno filtering
-            mylineno = 0
-        _stmts = []
-        _stmt_parents = []
-        for node in stmts:
-            stmt = node.statement()
-            # line filtering is on and we have reached our location, break
-            if mylineno > 0 and stmt.fromlineno and stmt.fromlineno > mylineno:
-                break
-            assert hasattr(node, 'assign_type'), (node, node.scope(),
-                                                  node.scope().locals)
-            assign_type = node.assign_type()
-
-            if node.has_base(self):
-                break
-
-            _stmts, done = assign_type._get_filtered_stmts(self, node, _stmts, mystmt)
-            if done:
-                break
-
-            optional_assign = assign_type.optional_assign
-            if optional_assign and assign_type.parent_of(self):
-                # we are inside a loop, loop var assigment is hidding previous
-                # assigment
-                _stmts = [node]
-                _stmt_parents = [stmt.parent]
-                continue
-
-            # XXX comment various branches below!!!
-            try:
-                pindex = _stmt_parents.index(stmt.parent)
-            except ValueError:
-                pass
-            else:
-                # we got a parent index, this means the currently visited node
-                # is at the same block level as a previously visited node
-                if _stmts[pindex].assign_type().parent_of(assign_type):
-                    # both statements are not at the same block level
-                    continue
-                # if currently visited node is following previously considered
-                # assignement and both are not exclusive, we can drop the
-                # previous one. For instance in the following code ::
-                #
-                #   if a:
-                #     x = 1
-                #   else:
-                #     x = 2
-                #   print x
-                #
-                # we can't remove neither x = 1 nor x = 2 when looking for 'x'
-                # of 'print x'; while in the following ::
-                #
-                #   x = 1
-                #   x = 2
-                #   print x
-                #
-                # we can remove x = 1 when we see x = 2
-                #
-                # moreover, on loop assignment types, assignment won't
-                # necessarily be done if the loop has no iteration, so we don't
-                # want to clear previous assigments if any (hence the test on
-                # optional_assign)
-                if not (optional_assign or interpreterutil.are_exclusive(_stmts[pindex], node)):
-                    del _stmt_parents[pindex]
-                    del _stmts[pindex]
-            if isinstance(node, (treeabc.Parameter, treeabc.AssignName)):
-                if not optional_assign and stmt.parent is mystmt.parent:
-                    _stmts = []
-                    _stmt_parents = []
-            elif isinstance(node, treeabc.DelName):
-                _stmts = []
-                _stmt_parents = []
-                continue
-            if not interpreterutil.are_exclusive(self, node):
-                _stmts.append(node)
-                _stmt_parents.append(stmt.parent)
-        return _stmts
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -659,13 +414,3 @@ class BaseContainer(ParentAssignTypeMixin, NodeNG):
 
     def postinit(self, elts):
         self.elts = elts
-
-    def itered(self):
-        return self.elts
-
-    def bool_value(self):
-        return bool(self.elts)
-
-    @abc.abstractmethod
-    def pytype(self):
-        pass

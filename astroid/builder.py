@@ -93,26 +93,6 @@ class AstroidBuilder(object):
         self._manager = manager or MANAGER
         self._apply_transforms = apply_transforms
 
-    def module_build(self, module, modname=None):
-        """Build an astroid from a living module instance."""
-        node = None
-        path = getattr(module, '__file__', None)
-        if path is not None:
-            path_, ext = os.path.splitext(modutils._path_from_filename(path))
-            if ext in ('.py', '.pyc', '.pyo') and os.path.exists(path_ + '.py'):
-                node = self.file_build(path_ + '.py', modname)
-        if node is None:
-            # this is a built-in module
-            # get a partial representation by introspection
-            node = raw_building.ast_from_object(module, name=modname)
-            # FIXME
-            node.source_file = path
-            if self._apply_transforms:
-                # We have to handle transformation by ourselves since the
-                # rebuilder isn't called for builtin nodes
-                node = self._manager.visit_transforms(node)
-        return node
-
     def file_build(self, path, modname=None):
         """Build astroid from a source code file (i.e. from an ast)
 
@@ -181,56 +161,6 @@ class AstroidBuilder(object):
         builder = rebuilder.TreeRebuilder()
         module = builder.visit_module(node, modname, node_file, package)
         return module
-
-
-def delayed_assignments(root):
-    '''This function modifies nodes according to AssignAttr nodes.
-
-    It traverses the entire AST, and when it encounters an AssignAttr
-    node it modifies the instance_attrs or external_attrs of the node
-    respresenting that object.  Because it uses inference functions
-    that in turn depend on instance_attrs and external_attrs, calling
-    it a tree that already have instance_attrs and external_attrs set
-    may crash or fail to modify those variables correctly.
-
-    Args:
-        root (node_classes.NodeNG): The root of the AST that 
-            delayed_assignments() is searching for assignments.
-
-    '''
-    stack = [root]
-    while stack:
-        node = stack.pop()
-        stack.extend(node.get_children())
-        if isinstance(node, treeabc.AssignAttr):
-            frame = node.frame()
-            try:
-                # Here, node.expr.infer() will return either the node
-                # being assigned to itself, for Module, ClassDef,
-                # FunctionDef, or Lambda nodes, or an Instance object
-                # corresponding to a ClassDef node.
-                for inferred in node.expr.infer():
-                    if isinstance(inferred, runtimeabc.Instance):
-                        values = inferred._proxied.instance_attrs[node.attrname]
-                    elif isinstance(inferred, treeabc.Lambda):
-                        values = inferred.instance_attrs[node.attrname]
-                    elif isinstance(inferred, (treeabc.Module, treeabc.ClassDef)):
-                        values = inferred.external_attrs[node.attrname]
-                    else:
-                        continue
-                    if node in values:
-                        continue
-                    else:
-                        # I have no idea why there's a special case
-                        # for __init__ that changes the order of the
-                        # attributes or what that order means.
-                        if (values and frame.name == '__init__' and not
-                            values[0].frame().name == '__init__'):
-                            values.insert(0, node)
-                        else:
-                            values.append(node)
-            except (exceptions.InferenceError, exceptions.AstroidBuildingError):
-                pass
 
 
 def parse(code, module_name='', path=None, apply_transforms=True):

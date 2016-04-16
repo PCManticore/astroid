@@ -165,3 +165,18 @@ def register_implementation(base):
         base.register(impl)
         return impl
     return wrapped
+
+def get_wrapping_class(node):
+    """Obtain the class that *wraps* this node
+
+    We consider that a class wraps a node if the class
+    is a parent for the said node.
+    """
+
+    klass = node.frame()
+    while klass is not None and not isinstance(klass, ClassDef):
+        if klass.parent is None:
+            klass = None
+        else:
+            klass = klass.parent.frame()
+    return klass
