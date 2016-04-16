@@ -99,26 +99,6 @@ class InferenceUtil(unittest.TestCase):
         self.assertEqual(util.are_exclusive(f4, f1), False)
         self.assertEqual(util.are_exclusive(f4, f2), True)
 
-    def test_unpack_infer_uninferable_nodes(self):
-        node = test_utils.extract_node('''
-        x = [A] * 1
-        f = [x, [A] * 2]
-        f
-        ''')
-        inferred = next(node.infer())
-        unpacked = list(util.unpack_infer(inferred))
-        self.assertEqual(len(unpacked), 3)
-        self.assertTrue(all(elt is astroid_util.Uninferable
-                            for elt in unpacked))
-
-    def test_unpack_infer_empty_tuple(self):
-        node = test_utils.extract_node('''
-        ()
-        ''')
-        inferred = next(node.infer())
-        with self.assertRaises(InferenceError) as cm:
-            next(util.unpack_infer(inferred))
-
 
 if __name__ == '__main__':
     unittest.main()

@@ -27,20 +27,15 @@ import six
 
 import astroid
 from astroid import builder
-from astroid import context as contextmod
 from astroid import exceptions
 from astroid.tree import node_classes
 from astroid import nodes
 from astroid import parse
 from astroid import raw_building
-from astroid.interpreter import runtimeabc
-from astroid.interpreter import objects
-from astroid.interpreter import util as inferenceutil
 from astroid import util
 from astroid import test_utils
 from astroid import transforms
 from astroid.tests import resources
-from astroid.tree import treeabc
 
 
 abuilder = builder.AstroidBuilder()
@@ -67,33 +62,37 @@ class AsStringTest(resources.SysPathSetup, unittest.TestCase):
         node = parse(code)
         self.assertEqual(node.as_string().strip(), code.strip())
 
-    def test_as_string_for_list_containing_uninferable(self):
-        node = test_utils.extract_node('''
-        def foo():
-            bar = [arg] * 1
-        ''')
-        binop = node.body[0].value
-        inferred = next(binop.infer())
-        self.assertEqual(inferred.as_string(), '[Uninferable]')
-        self.assertEqual(binop.as_string(), '([arg]) * (1)')
+    # TODO: test depends on inference
 
-    def test_frozenset_as_string(self):
-        nodes = test_utils.extract_node('''
-        frozenset((1, 2, 3)) #@
-        frozenset({1, 2, 3}) #@
-        frozenset([1, 2, 3,]) #@
+    # def test_as_string_for_list_containing_uninferable(self):
+    #     node = test_utils.extract_node('''
+    #     def foo():
+    #         bar = [arg] * 1
+    #     ''')
+    #     binop = node.body[0].value
+    #     inferred = next(binop.infer())
+    #     self.assertEqual(inferred.as_string(), '[Uninferable]')
+    #     self.assertEqual(binop.as_string(), '([arg]) * (1)')
 
-        frozenset(None) #@
-        frozenset(1) #@
-        ''')
-        nodes = [next(node.infer()) for node in nodes]
+    # TODO: test depends on inference
 
-        self.assertEqual(nodes[0].as_string(), 'frozenset((1, 2, 3))')
-        self.assertEqual(nodes[1].as_string(), 'frozenset({1, 2, 3})')
-        self.assertEqual(nodes[2].as_string(), 'frozenset([1, 2, 3])')
+    # def test_frozenset_as_string(self):
+    #     nodes = test_utils.extract_node('''
+    #     frozenset((1, 2, 3)) #@
+    #     frozenset({1, 2, 3}) #@
+    #     frozenset([1, 2, 3,]) #@
 
-        self.assertNotEqual(nodes[3].as_string(), 'frozenset(None)')
-        self.assertNotEqual(nodes[4].as_string(), 'frozenset(1)')
+    #     frozenset(None) #@
+    #     frozenset(1) #@
+    #     ''')
+    #     nodes = [next(node.infer()) for node in nodes]
+
+    #     self.assertEqual(nodes[0].as_string(), 'frozenset((1, 2, 3))')
+    #     self.assertEqual(nodes[1].as_string(), 'frozenset({1, 2, 3})')
+    #     self.assertEqual(nodes[2].as_string(), 'frozenset([1, 2, 3])')
+
+    #     self.assertNotEqual(nodes[3].as_string(), 'frozenset(None)')
+    #     self.assertNotEqual(nodes[4].as_string(), 'frozenset(1)')
 
     def test_varargs_kwargs_as_string(self):
         ast = abuilder.string_build('raise_string(*args, **kwargs)').body[0]
@@ -416,15 +415,17 @@ from ..cave import wine\n\n"""
         self.assertEqual(excs[0].name, 'PickleError')
         self.assertIs(excs[-1], util.Uninferable)
 
-    def test_absolute_import(self):
-        astroid = resources.build_file('data/absimport.py')
-        ctx = contextmod.InferenceContext()
-        # will fail if absolute import failed
-        ctx.lookupname = 'message'
-        next(astroid['message'].infer(ctx))
-        ctx.lookupname = 'email'
-        m = next(astroid['email'].infer(ctx))
-        self.assertFalse(m.source_file.startswith(os.path.join('data', 'email.py')))
+    # TODO: test depends on inference
+
+    # def test_absolute_import(self):
+    #     astroid = resources.build_file('data/absimport.py')
+    #     ctx = contextmod.InferenceContext()
+    #     # will fail if absolute import failed
+    #     ctx.lookupname = 'message'
+    #     next(astroid['message'].infer(ctx))
+    #     ctx.lookupname = 'email'
+    #     m = next(astroid['email'].infer(ctx))
+    #     self.assertFalse(m.source_file.startswith(os.path.join('data', 'email.py')))
 
     def test_more_absolute_import(self):
         astroid = resources.build_file('data/module1abs/__init__.py', 'data.module1abs')
@@ -493,6 +494,8 @@ class NameNodeTest(unittest.TestCase):
 
 class ArgumentsNodeTC(unittest.TestCase):
 
+    # TODO: test depends on inference
+
     @unittest.skipIf(sys.version_info[:2] == (3, 3),
                      "Line numbering is broken on Python 3.3.")
     def test_linenumbering(self):
@@ -503,10 +506,10 @@ class ArgumentsNodeTC(unittest.TestCase):
         ''')
         self.assertEqual(ast['func'].args.fromlineno, 2)
         self.assertFalse(ast['func'].args.is_statement)
-        xlambda = next(ast['x'].infer())
-        self.assertEqual(xlambda.args.fromlineno, 4)
-        self.assertEqual(xlambda.args.tolineno, 4)
-        self.assertFalse(xlambda.args.is_statement)
+        # xlambda = next(ast['x'].infer())
+        # self.assertEqual(xlambda.args.fromlineno, 4)
+        # self.assertEqual(xlambda.args.tolineno, 4)
+        # self.assertFalse(xlambda.args.is_statement)
         if sys.version_info < (3, 0):
             self.assertEqual(ast['func'].args.tolineno, 3)
         else:
@@ -516,79 +519,83 @@ class ArgumentsNodeTC(unittest.TestCase):
 
 class UnboundMethodNodeTest(unittest.TestCase):
 
-    def test_no_super_getattr(self):
-        # This is a test for issue
-        # https://bitbucket.org/logilab/astroid/issue/91, which tests
-        # that UnboundMethod doesn't call super when doing .getattr.
+    # TODO: test depends on inference
 
-        ast = builder.parse('''
-        class A(object):
-            def test(self):
-                pass
-        meth = A.test
-        ''')
-        node = next(ast['meth'].infer())
-        with self.assertRaises(exceptions.AttributeInferenceError):
-            node.getattr('__missssing__')
-        name = node.getattr('__name__')[0]
-        self.assertIsInstance(name, nodes.Const)
-        self.assertEqual(name.value, 'test')
+    # def test_no_super_getattr(self):
+    #     # This is a test for issue
+    #     # https://bitbucket.org/logilab/astroid/issue/91, which tests
+    #     # that UnboundMethod doesn't call super when doing .getattr.
+
+    #     ast = builder.parse('''
+    #     class A(object):
+    #         def test(self):
+    #             pass
+    #     meth = A.test
+    #     ''')
+    #     node = next(ast['meth'].infer())
+    #     with self.assertRaises(exceptions.AttributeInferenceError):
+    #         node.getattr('__missssing__')
+    #     name = node.getattr('__name__')[0]
+    #     self.assertIsInstance(name, nodes.Const)
+    #     self.assertEqual(name.value, 'test')
 
 
 class BoundMethodNodeTest(unittest.TestCase):
 
-    def test_is_property(self):
-        ast = builder.parse('''
-        import abc
+    # TODO: test depends on inference
+    
+    # def test_is_property(self):
+    #     ast = builder.parse('''
+    #     import abc
 
-        def cached_property():
-            # Not a real decorator, but we don't care
-            pass
-        def reify():
-            # Same as cached_property
-            pass
-        def lazy_property():
-            pass
-        def lazyproperty():
-            pass
-        def lazy(): pass
-        class A(object):
-            @property
-            def builtin_property(self):
-                return 42
-            @abc.abstractproperty
-            def abc_property(self):
-                return 42
-            @cached_property
-            def cached_property(self): return 42
-            @reify
-            def reified(self): return 42
-            @lazy_property
-            def lazy_prop(self): return 42
-            @lazyproperty
-            def lazyprop(self): return 42
-            def not_prop(self): pass
-            @lazy
-            def decorated_with_lazy(self): return 42
+    #     def cached_property():
+    #         # Not a real decorator, but we don't care
+    #         pass
+    #     def reify():
+    #         # Same as cached_property
+    #         pass
+    #     def lazy_property():
+    #         pass
+    #     def lazyproperty():
+    #         pass
+    #     def lazy(): pass
+    #     class A(object):
+    #         @property
+    #         def builtin_property(self):
+    #             return 42
+    #         @abc.abstractproperty
+    #         def abc_property(self):
+    #             return 42
+    #         @cached_property
+    #         def cached_property(self): return 42
+    #         @reify
+    #         def reified(self): return 42
+    #         @lazy_property
+    #         def lazy_prop(self): return 42
+    #         @lazyproperty
+    #         def lazyprop(self): return 42
+    #         def not_prop(self): pass
+    #         @lazy
+    #         def decorated_with_lazy(self): return 42
 
-        cls = A()
-        builtin_property = cls.builtin_property
-        abc_property = cls.abc_property
-        cached_p = cls.cached_property
-        reified = cls.reified
-        not_prop = cls.not_prop
-        lazy_prop = cls.lazy_prop
-        lazyprop = cls.lazyprop
-        decorated_with_lazy = cls.decorated_with_lazy
-        ''')
-        for prop in ('builtin_property', 'abc_property', 'cached_p', 'reified',
-                     'lazy_prop', 'lazyprop', 'decorated_with_lazy'):
-            inferred = next(ast[prop].infer())
-            self.assertIsInstance(inferred, nodes.Const, prop)
-            self.assertEqual(inferred.value, 42, prop)
+    #     cls = A()
+    #     builtin_property = cls.builtin_property
+    #     abc_property = cls.abc_property
+    #     cached_p = cls.cached_property
+    #     reified = cls.reified
+    #     not_prop = cls.not_prop
+    #     lazy_prop = cls.lazy_prop
+    #     lazyprop = cls.lazyprop
+    #     decorated_with_lazy = cls.decorated_with_lazy
+    #     ''')
+    #     for prop in ('builtin_property', 'abc_property', 'cached_p', 'reified',
+    #                  'lazy_prop', 'lazyprop', 'decorated_with_lazy'):
+    #         inferred = next(ast[prop].infer())
+    #         self.assertIsInstance(inferred, nodes.Const, prop)
+    #         self.assertEqual(inferred.value, 42, prop)
 
-        inferred = next(ast['not_prop'].infer())
-        self.assertIsInstance(inferred, objects.BoundMethod)
+    #     inferred = next(ast['not_prop'].infer())
+    #     self.assertIsInstance(inferred, objects.BoundMethod)
 
 
 @test_utils.require_version('3.5')
@@ -661,29 +668,31 @@ class ScopeTest(unittest.TestCase):
         self.assertIsInstance(decorators.scope(), nodes.Module)
         self.assertEqual(decorators.scope(), decorators.root())
 
-    def test_scoped_nodes(self):
-        module = parse('''
-        def function():
-            pass
-        genexp = (i for i in range(10))
-        dictcomp = {i:i for i in range(10)}
-        setcomp = {i for i in range(10)}
-        listcomp = [i for i in range(10)]
-        lambd = lambda x: x
-        class classdef: pass
-        ''')
-        self.assertIsInstance(module.scope(), nodes.Module)
-        self.assertIsInstance(module['genexp'].parent.value.scope(), nodes.GeneratorExp)
-        self.assertIsInstance(module['dictcomp'].parent.value.scope(), nodes.DictComp)
-        self.assertIsInstance(module['setcomp'].parent.value.scope(), nodes.SetComp)
-        self.assertIsInstance(module['lambd'].parent.value.scope(), nodes.Lambda)
-        self.assertIsInstance(next(module['function'].infer()).scope(), nodes.FunctionDef)
-        self.assertIsInstance(next(module['classdef'].infer()).scope(), nodes.ClassDef)
+    # TODO: test depends on inference
 
-        if six.PY3:
-            self.assertIsInstance(module['listcomp'].parent.value.scope(), nodes.ListComp)
-        else:
-            self.assertIsInstance(module['listcomp'].parent.value.scope(), nodes.Module)
+    # def test_scoped_nodes(self):
+    #     module = parse('''
+    #     def function():
+    #         pass
+    #     genexp = (i for i in range(10))
+    #     dictcomp = {i:i for i in range(10)}
+    #     setcomp = {i for i in range(10)}
+    #     listcomp = [i for i in range(10)]
+    #     lambd = lambda x: x
+    #     class classdef: pass
+    #     ''')
+    #     self.assertIsInstance(module.scope(), nodes.Module)
+    #     self.assertIsInstance(module['genexp'].parent.value.scope(), nodes.GeneratorExp)
+    #     self.assertIsInstance(module['dictcomp'].parent.value.scope(), nodes.DictComp)
+    #     self.assertIsInstance(module['setcomp'].parent.value.scope(), nodes.SetComp)
+    #     self.assertIsInstance(module['lambd'].parent.value.scope(), nodes.Lambda)
+    #     self.assertIsInstance(next(module['function'].infer()).scope(), nodes.FunctionDef)
+    #     self.assertIsInstance(next(module['classdef'].infer()).scope(), nodes.ClassDef)
+
+    #     if six.PY3:
+    #         self.assertIsInstance(module['listcomp'].parent.value.scope(), nodes.ListComp)
+    #     else:
+    #         self.assertIsInstance(module['listcomp'].parent.value.scope(), nodes.Module)
 
     def test_scope_of_default_argument_value(self):
         node = test_utils.extract_node('''

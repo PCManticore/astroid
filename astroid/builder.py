@@ -136,7 +136,6 @@ class AstroidBuilder(object):
         # Visit the transforms
         if self._apply_transforms:
             module = self._manager.visit_transforms(module)
-        delayed_assignments(module)
         return module
 
     def _data_build(self, data, modname, path):

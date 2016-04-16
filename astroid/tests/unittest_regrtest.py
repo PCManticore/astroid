@@ -200,41 +200,6 @@ def run():
             # triggers the _is_metaclass call
             klass.type # pylint: disable=pointless-statement
 
-    def test_decorator_callchain_issue42(self):
-        builder = AstroidBuilder()
-        data = """
-
-def test():
-    def factory(func):
-        def newfunc():
-            func()
-        return newfunc
-    return factory
-
-@test()
-def crash():
-    pass
-"""
-        astroid = builder.string_build(data, __name__, __file__)
-        self.assertEqual(astroid['crash'].type, 'function')
-
-    def test_filter_stmts_scoping(self):
-        builder = AstroidBuilder()
-        data = """
-def test():
-    compiler = int()
-    class B(compiler.__class__):
-        pass
-    compiler = B()
-    return compiler
-"""
-        astroid = builder.string_build(data, __name__, __file__)
-        test = astroid['test']
-        result = next(test.infer_call_result(astroid))
-        self.assertIsInstance(result, Instance)
-        base = next(result._proxied.bases[0].infer())
-        self.assertEqual(base.name, 'int')
-
     def test_ancestors_patching_class_recursion(self):
         node = AstroidBuilder().string_build(textwrap.dedent("""
         import string

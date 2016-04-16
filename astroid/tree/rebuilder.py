@@ -341,17 +341,17 @@ class TreeRebuilder(object):
                          args, keywords)
         return newnode
 
-    def visit_classdef(self, node, parent, newstyle=None):
+    def visit_classdef(self, node, parent): # , newstyle=None):
         """visit a ClassDef node to become astroid"""
         node, doc = _get_doc(node)
         newnode = nodes.ClassDef(node.name, doc, node.lineno,
                                  node.col_offset, parent)
-        metaclass = None
-        if PY3:
-            for keyword in node.keywords:
-                if keyword.arg == 'metaclass':
-                    metaclass = self.visit(keyword, newnode).value
-                break
+        # metaclass = None
+        # if PY3:
+        #     for keyword in node.keywords:
+        #         if keyword.arg == 'metaclass':
+        #             metaclass = self.visit(keyword, newnode).value
+        #         break
         if node.decorator_list:
             decorators = self.visit_decorators(node, newnode)
         else:
@@ -360,7 +360,7 @@ class TreeRebuilder(object):
                           for child in node.bases],
                          [self.visit(child, newnode)
                           for child in node.body],
-                         decorators, newstyle, metaclass)
+                         decorators) #, newstyle, metaclass)
         return newnode
 
     def visit_const(self, node, parent):
@@ -860,9 +860,9 @@ class TreeRebuilder3(TreeRebuilder):
             newnode.postinit(self.visit(node.value, newnode))
         return newnode
 
-    def visit_classdef(self, node, parent, newstyle=True):
-        return super(TreeRebuilder3, self).visit_classdef(node, parent,
-                                                          newstyle=newstyle)
+    # def visit_classdef(self, node, parent, newstyle=True):
+    #     return super(TreeRebuilder3, self).visit_classdef(node, parent,
+    #                                                       newstyle=newstyle)
 
     # Async structs added in Python 3.5
     def visit_asyncfunctiondef(self, node, parent):
