@@ -291,6 +291,7 @@ class ImportNodeTest(resources.SysPathSetup, unittest.TestCase):
         self.module2 = resources.build_file('data/module2.py', 'data.module2')
 
     # TODO: do we want real_name?
+    @unittest.skipUnless(2 == 3, "need to decide if we need real_name or not")
     def test_real_name(self):
         from_ = self.module['NameNode']
         self.assertEqual(inferenceutil.real_name(from_, 'NameNode'), 'Name')
@@ -456,20 +457,6 @@ class Python35AsyncTest(unittest.TestCase):
                 await 42
         ''')
         self._test_await_async_as_string(code)
-
-
-class BaseTypesTest(unittest.TestCase):
-
-    def test_concrete_issubclass(self):
-        for node in nodes.ALL_NODE_CLASSES:
-            name = node.__name__
-            base_type = getattr(treeabc, name)
-            self.assertTrue(issubclass(node, base_type), (node, base_type))
-
-        self.assertTrue(issubclass(objects.Instance, runtimeabc.Instance))
-        self.assertTrue(issubclass(objects.Generator, runtimeabc.Generator))
-        self.assertTrue(issubclass(objects.BoundMethod, runtimeabc.BoundMethod))
-        self.assertTrue(issubclass(objects.UnboundMethod, runtimeabc.UnboundMethod))
 
 
 class ScopeTest(unittest.TestCase):
