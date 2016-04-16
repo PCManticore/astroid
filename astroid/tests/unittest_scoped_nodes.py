@@ -27,8 +27,6 @@ import warnings
 import six
 
 from astroid import builder
-from astroid import context
-from astroid.interpreter import lookup
 from astroid import nodes
 from astroid.tree import scoped_nodes
 from astroid import util
@@ -37,9 +35,6 @@ from astroid.exceptions import (
     NoDefault, ResolveError, MroError,
     InconsistentMroError, DuplicateBasesError,
     TooManyLevelsError,
-)
-from astroid.interpreter.objects import (
-    Instance, BoundMethod, UnboundMethod, Generator
 )
 from astroid import test_utils
 from astroid.tests import resources
@@ -67,23 +62,6 @@ class ModuleLoader(resources.SysPathSetup):
 
 
 class ModuleNodeTest(ModuleLoader, unittest.TestCase):
-
-    def test_special_attributes(self):
-        self.assertEqual(len(self.module.getattr('__name__')), 1)
-        self.assertIsInstance(self.module.getattr('__name__')[0], nodes.Const)
-        self.assertEqual(self.module.getattr('__name__')[0].value, 'data.module')
-        self.assertEqual(len(self.module.getattr('__doc__')), 1)
-        self.assertIsInstance(self.module.getattr('__doc__')[0], nodes.Const)
-        self.assertEqual(self.module.getattr('__doc__')[0].value, 'test module for astroid\n')
-        self.assertEqual(len(self.module.getattr('__file__')), 1)
-        self.assertIsInstance(self.module.getattr('__file__')[0], nodes.Const)
-        self.assertEqual(self.module.getattr('__file__')[0].value,
-                         os.path.abspath(resources.find('data/module.py')))
-        self.assertEqual(len(self.module.getattr('__dict__')), 1)
-        self.assertIsInstance(self.module.getattr('__dict__')[0], nodes.Dict)
-        self.assertRaises(AttributeInferenceError, self.module.getattr, '__path__')
-        self.assertEqual(len(self.pack.getattr('__path__')), 1)
-        self.assertIsInstance(self.pack.getattr('__path__')[0], nodes.List)
 
     def test_dict_interface(self):
         _test_dict_interface(self, self.module, 'YO')
@@ -124,17 +102,6 @@ class ModuleNodeTest(ModuleLoader, unittest.TestCase):
         ''')
         res = sorted(m.public_names())
         self.assertEqual(res, ['test', 'tzop'])
-
-    def test_module_getattr(self):
-        data = '''
-            appli = application
-            appli += 2
-            del appli
-        '''
-        astroid = builder.parse(data, __name__)
-        # test del statement not returned by getattr
-        self.assertEqual(len(astroid.getattr('appli')), 2,
-                         astroid.getattr('appli'))
 
     def test_relative_to_absolute_name(self):
         # package
@@ -198,17 +165,6 @@ class ModuleNodeTest(ModuleLoader, unittest.TestCase):
 
 class FunctionNodeTest(ModuleLoader, unittest.TestCase):
 
-    def test_special_attributes(self):
-        func = self.module2['make_class']
-        self.assertEqual(len(func.getattr('__name__')), 1)
-        self.assertIsInstance(func.getattr('__name__')[0], nodes.Const)
-        self.assertEqual(func.getattr('__name__')[0].value, 'make_class')
-        self.assertEqual(len(func.getattr('__doc__')), 1)
-        self.assertIsInstance(func.getattr('__doc__')[0], nodes.Const)
-        self.assertEqual(func.getattr('__doc__')[0].value, 'check base is correctly resolved to Concrete0')
-        self.assertEqual(len(self.module.getattr('__dict__')), 1)
-        self.assertIsInstance(self.module.getattr('__dict__')[0], nodes.Dict)
-
     def test_dict_interface(self):
         _test_dict_interface(self, self.module['global_access'], 'local')
 
@@ -218,9 +174,6 @@ class FunctionNodeTest(ModuleLoader, unittest.TestCase):
         self.assertRaises(NoDefault, func.args.default_value, 'args')
         self.assertRaises(NoDefault, func.args.default_value, 'kwargs')
         self.assertRaises(NoDefault, func.args.default_value, 'any')
-        #self.assertIsInstance(func.mularg_class('args'), nodes.Tuple)
-        #self.assertIsInstance(func.mularg_class('kwargs'), nodes.Dict)
-        #self.assertIsNone(func.mularg_class('base'))
 
     def test_navigation(self):
         function = self.module['global_access']
@@ -271,39 +224,7 @@ class FunctionNodeTest(ModuleLoader, unittest.TestCase):
         self.assertFalse(self.module2['not_a_generator'].is_generator())
         self.assertFalse(self.module2['make_class'].is_generator())
 
-    def test_is_abstract(self):
-        method = self.module2['AbstractClass']['to_override']
-        self.assertTrue(method.is_abstract(pass_is_abstract=False))
-        self.assertEqual(method.qname(), 'data.module2.AbstractClass.to_override')
-        self.assertEqual(method.pytype(), '%s.instancemethod' % BUILTINS)
-        method = self.module2['AbstractClass']['return_something']
-        self.assertFalse(method.is_abstract(pass_is_abstract=False))
-        # non regression : test raise "string" doesn't cause an exception in is_abstract
-        func = self.module2['raise_string']
-        self.assertFalse(func.is_abstract(pass_is_abstract=False))
-
-    def test_is_abstract_decorated(self):
-        methods = test_utils.extract_node("""
-            import abc
-
-            class Klass(object):
-                @abc.abstractproperty
-                def prop(self):  #@
-                   pass
-
-                @abc.abstractmethod
-                def method1(self):  #@
-                   pass
-
-                some_other_decorator = lambda x: x
-                @some_other_decorator
-                def method2(self):  #@
-                   pass
-         """)
-        self.assertTrue(methods[0].is_abstract(pass_is_abstract=False))
-        self.assertTrue(methods[1].is_abstract(pass_is_abstract=False))
-        self.assertFalse(methods[2].is_abstract(pass_is_abstract=False))
-
+        # TODO: enable?
 ##     def test_raises(self):
 ##         method = self.module2['AbstractClass']['to_override']
 ##         self.assertEqual([str(term) for term in method.raises()],
@@ -315,44 +236,9 @@ class FunctionNodeTest(ModuleLoader, unittest.TestCase):
 ##         self.assertEqual([str(term) for term in method.returns()],
 ##                           ["Const('toto')", "Const(None)"])
 
-    def test_lambda_pytype(self):
-        data = '''
-            def f():
-                g = lambda: None
-        '''
-        astroid = builder.parse(data)
-        g = list(astroid['f'].ilookup('g'))[0]
-        self.assertEqual(g.pytype(), '%s.function' % BUILTINS)
-
     def test_lambda_qname(self):
         astroid = builder.parse('lmbd = lambda: None', __name__)
         self.assertEqual('%s.<lambda>' % __name__, astroid['lmbd'].parent.value.qname())
-
-    def test_is_method(self):
-        data = '''
-            class A:
-                def meth1(self):
-                    return 1
-                @classmethod
-                def meth2(cls):
-                    return 2
-                @staticmethod
-                def meth3():
-                    return 3
-
-            def function():
-                return 0
-
-            @staticmethod
-            def sfunction():
-                return -1
-        '''
-        astroid = builder.parse(data)
-        self.assertTrue(astroid['A']['meth1'].is_method())
-        self.assertTrue(astroid['A']['meth2'].is_method())
-        self.assertTrue(astroid['A']['meth3'].is_method())
-        self.assertFalse(astroid['function'].is_method())
-        self.assertFalse(astroid['sfunction'].is_method())
 
     def test_argnames(self):
         if sys.version_info < (3, 0):
