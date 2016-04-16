@@ -300,39 +300,6 @@ class BuilderTest(unittest.TestCase):
         with self.assertRaises(exceptions.AstroidBuildingError):
             resources.build_file('data/inexistant.py')
 
-    # TODO: test depends on inference.
-
-    # def test_inspect_build_type_object(self):
-    #     builtin_ast = MANAGER.ast_from_module_name(BUILTINS)
-
-    #     inferred = list(builtin_ast.igetattr('object'))
-    #     self.assertEqual(len(inferred), 1)
-    #     inferred = inferred[0]
-    #     self.assertEqual(inferred.name, 'object')
-    #     inferred.as_string() # no crash test
-
-    #     inferred = list(builtin_ast.igetattr('type'))
-    #     self.assertEqual(len(inferred), 1)
-    #     inferred = inferred[0]
-    #     self.assertEqual(inferred.name, 'type')
-    #     inferred.as_string() # no crash test
-
-    # TODO: 
-
-    # def test_inspect_transform_module(self):
-    #     # ensure no cached version of the time module
-    #     MANAGER._mod_file_cache.pop(('time', None), None)
-    #     MANAGER.astroid_cache.pop('time', None)
-    #     def transform_time(node):
-    #         if node.name == 'time':
-    #             node.transformed = True
-    #     MANAGER.register_transform(nodes.Module, transform_time)
-    #     try:
-    #         time_ast = MANAGER.ast_from_module_name('time')
-    #         self.assertTrue(getattr(time_ast, 'transformed', False))
-    #     finally:
-    #         MANAGER.unregister_transform(nodes.Module, transform_time)
-
     def test_package_name(self):
         """test base properties and method of a astroid module"""
         datap = resources.build_file('data/__init__.py', 'data')
@@ -358,96 +325,6 @@ class BuilderTest(unittest.TestCase):
         self.assertIsInstance(func.body[1].body[0], nodes.Expr)
         self.assertIsInstance(func.body[1].body[0].value, nodes.Yield)
 
-    def test_newstyle_detection(self):
-        data = '''
-            class A:
-                "old style"
-
-            class B(A):
-                "old style"
-
-            class C(object):
-                "new style"
-
-            class D(C):
-                "new style"
-
-            __metaclass__ = type
-
-            class E(A):
-                "old style"
-
-            class F:
-                "new style"
-        '''
-        mod_ast = builder.parse(data, __name__)
-        if six.PY3:
-            self.assertTrue(mod_ast['A'].newstyle)
-            self.assertTrue(mod_ast['B'].newstyle)
-            self.assertTrue(mod_ast['E'].newstyle)
-        else:
-            self.assertFalse(mod_ast['A'].newstyle)
-            self.assertFalse(mod_ast['B'].newstyle)
-            self.assertFalse(mod_ast['E'].newstyle)
-        self.assertTrue(mod_ast['C'].newstyle)
-        self.assertTrue(mod_ast['D'].newstyle)
-        self.assertTrue(mod_ast['F'].newstyle)
-
-    # TODO: test depends on inference
-
-    # @unittest.expectedFailure
-    # def test_globals(self):
-    #     data = '''
-    #         CSTE = 1
-
-    #         def update_global():
-    #             global CSTE
-    #             CSTE += 1
-
-    #         def global_no_effect():
-    #             global CSTE2
-    #             print (CSTE)
-    #     '''
-    #     astroid = builder.parse(data, __name__)
-    #     self.assertEqual(len(astroid.getattr('CSTE')), 2)
-    #     self.assertIsInstance(astroid.getattr('CSTE')[0], nodes.AssignName)
-    #     self.assertEqual(astroid.getattr('CSTE')[0].fromlineno, 2)
-    #     self.assertEqual(astroid.getattr('CSTE')[1].fromlineno, 6)
-    #     with self.assertRaises(exceptions.AttributeInferenceError):
-    #         astroid.getattr('CSTE2')
-    #     with self.assertRaises(exceptions.InferenceError):
-    #         next(astroid['global_no_effect'].ilookup('CSTE2'))
-
-    @unittest.skipIf(util.JYTHON,
-                     'This test is skipped on Jython, because the '
-                     'socket object is patched later on with the '
-                     'methods we are looking for. Since we do not '
-                     'understand setattr in for loops yet, we skip this')
-    def test_socket_build(self):
-        import socket
-        astroid = self.builder.module_build(socket)
-        # XXX just check the first one. Actually 3 objects are inferred (look at
-        # the socket module) but the last one as those attributes dynamically
-        # set and astroid is missing this.
-        for fclass in astroid.igetattr('socket'):
-            self.assertIn('connect', fclass)
-            self.assertIn('send', fclass)
-            self.assertIn('close', fclass)
-            break
-
-    # TODO: test depends on inference
-
-    # def test_gen_expr_var_scope(self):
-    #     data = 'l = list(n for n in range(10))\n'
-    #     astroid = builder.parse(data, __name__)
-    #     # n unavailable outside gen expr scope
-    #     self.assertNotIn('n', astroid)
-    #     # test n is inferable anyway
-    #     n = test_utils.get_name_node(astroid, 'n')
-    #     self.assertIsNot(n.scope(), astroid)
-    #     self.assertEqual([i.__class__ for i in n.infer()],
-    #                      [util.Uninferable.__class__])
-
     def test_no_future_imports(self):
         mod = builder.parse("import sys")
         self.assertEqual(set(), mod.future_imports)
@@ -463,24 +340,6 @@ class BuilderTest(unittest.TestCase):
             """)
         self.assertEqual(frozenset(['print_function', 'absolute_import']), mod.future_imports)
 
-    # TODO: test depends on inference
-
-    # def test_inferred_build(self):
-    #     code = '''
-    #         class A: pass
-    #         A.type = "class"
-
-    #         def A_assign_type(self):
-    #             print (self)
-    #         A.assign_type = A_assign_type
-    #         '''
-    #     astroid = builder.parse(code)
-    #     lclass = list(astroid.igetattr('A'))
-    #     self.assertEqual(len(lclass), 1)
-    #     lclass = lclass[0]
-    #     self.assertIn('assign_type', lclass.external_attrs)
-    #     self.assertIn('type', lclass.external_attrs)
-
     def test_augassign_attr(self):
         builder.parse("""
             class Counter:
@@ -490,35 +349,6 @@ class BuilderTest(unittest.TestCase):
             """, __name__)
         # TODO: Check self.v += 1 generate AugAssign(AssAttr(...)),
         # not AugAssign(GetAttr(AssName...))
-
-    # TODO: test depends on inference
-
-    # def test_inferred_dont_pollute(self):
-    #     code = '''
-    #     def func(a=None):
-    #         a.custom_attr = 0
-    #         a #@
-    #     def func2(a={}):
-    #         a.custom_attr = 0
-    #         a #@
-    #     '''
-    #     name_nodes = test_utils.extract_node(code)
-    #     for node in name_nodes:
-    #         self.assertNotIn('custom_attr', next(node.infer()).locals)
-    #         self.assertNotIn('custom_attr', next(node.infer()).instance_attrs)
-
-    def test_asstuple(self):
-        code = 'a, b = range(2)'
-        astroid = builder.parse(code)
-        # TODO: rewrite this test not to use locals.
-
-        # self.assertIn('b', astroid.locals)
-        code = '''
-            def visit_if(self, node):
-                node.test, body = node.tests[0]
-            '''
-        astroid = builder.parse(code)
-        self.assertIn('body', astroid['visit_if'].locals)
 
     def test_build_constants(self):
         '''test expected values of constants after rebuilding'''
@@ -535,16 +365,6 @@ class BuilderTest(unittest.TestCase):
         self.assertIs(nothing, nodes.Empty)
         self.assertIsInstance(chain, nodes.Const)
         self.assertEqual(chain.value, 'None')
-
-    # TODO: test depends on inference
-
-    # def test_not_implemented(self):
-    #     node = test_utils.extract_node('''
-    #     NotImplemented #@
-    #     ''')
-    #     inferred = next(node.infer())
-    #     self.assertIsInstance(inferred, nodes.Const)
-    #     self.assertEqual(inferred.value, NotImplemented)
 
 
 class FileBuildTest(unittest.TestCase):
