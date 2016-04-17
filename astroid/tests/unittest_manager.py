@@ -48,7 +48,6 @@ class AstroidManagerTest(resources.SysPathSetup,
         super(AstroidManagerTest, self).setUp()
         self.manager = manager.AstroidManager()
         self.manager.clear_cache() # take care of borg
-        test_utils.bootstrap(self._builtins)
 
     def test_ast_from_file(self):
         filepath = unittest.__file__
@@ -172,10 +171,6 @@ class AstroidManagerTest(resources.SysPathSetup,
         with self.assertRaises(exceptions.AstroidBuildingError):
             self.manager.ast_from_module_name('foo.bar.baz')
         del self.manager._failed_import_hooks[0]
-
-    def test_builtins(self):
-        builtins_module = self.manager.builtins()
-        self.assertEqual(builtins_module.name, BUILTINS)
 
 
 class BorgAstroidManagerTC(unittest.TestCase):

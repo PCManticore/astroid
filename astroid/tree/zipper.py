@@ -252,7 +252,8 @@ class Zipper(wrapt.ObjectProxy):
             # This is a kludge to work around the problem of two Empty
             # nodes in different parts of an AST.  Empty nodes can
             # never be ancestors, so they can be safely skipped.
-            if self_ancestor is other_ancestor and not isinstance(self_ancestor, node_classes.Empty):
+            if self_ancestor is other_ancestor and self_ancestor is not node_classes.Empty:
+            # not isinstance(self_ancestor, node_classes.Empty):
                 ancestor = self_ancestor
             else:
                 break
@@ -438,31 +439,6 @@ class Zipper(wrapt.ObjectProxy):
                                node_classes.ClassDef, node_classes.Module))):
             location = location.up()
         return location
-
-    def infer(self, context=None, **kwargs):
-        """main interface to the interface system, return a generator on inferred
-        values.
-
-        If the instance has some explicit inference function set, it will be
-        called instead of the default interface.
-        """
-        if self._explicit_inference is not None:
-            # explicit_inference is not bound, give it self explicitly
-            try:
-                # pylint: disable=not-callable
-                return self._explicit_inference(self, context, **kwargs)
-            except exceptions.UseInferenceDefault:
-                pass
-
-        if not context:
-            return inference.infer(self, context, **kwargs)
-
-        key = (self, context.lookupname,
-               context.callcontext, context.boundnode)
-        if key in context.inferred:
-            return iter(context.inferred[key])
-
-        return context.cache_generator(key, inference.infer(self, context, **kwargs))
 
     # def scope(self):
     #     """Get the first node defining a new scope

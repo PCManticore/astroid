@@ -21,13 +21,11 @@ import textwrap
 
 import six
 
-from astroid import MANAGER, Instance, nodes
+from astroid import MANAGER, nodes
 from astroid.builder import AstroidBuilder
 from astroid import exceptions
-from astroid.interpreter import lookup
 from astroid.manager import AstroidManager
-from astroid import raw_building
-from astroid.test_utils import require_version, extract_node, bootstrap
+from astroid.test_utils import require_version, extract_node
 from astroid.tests import resources
 from astroid import transforms
 
@@ -48,7 +46,6 @@ class NonRegressionTests(resources.AstroidCacheSetupMixin,
         # to a new cache builtin module and proxy classes in the constants,
         # clear out the global manager cache.
         MANAGER.clear_cache()
-        bootstrap(self._builtins)
         MANAGER.always_load_extensions = False
         sys.path.pop(0)
         sys.path_importer_cache.pop(resources.find('data'), None)
@@ -63,7 +60,6 @@ class NonRegressionTests(resources.AstroidCacheSetupMixin,
         manager._mod_file_cache = {}
         manager._transform = transforms.TransformVisitor()
         manager.clear_cache() # trigger proper bootstraping
-        bootstrap()
         return manager
 
     @require_version('3.0')

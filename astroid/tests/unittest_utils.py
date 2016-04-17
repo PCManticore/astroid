@@ -18,9 +18,7 @@
 import unittest
 
 from astroid import builder
-from astroid import InferenceError
 from astroid import nodes
-from astroid.interpreter import util
 from astroid import test_utils
 from astroid import util as astroid_util
 

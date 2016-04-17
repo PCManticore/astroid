@@ -153,7 +153,7 @@ class FromToLineNoTest(unittest.TestCase):
                 arg):
                 print (arg)
             ''', __name__)
-        function = astroid['function']
+        function = astroid.down().down()
         self.assertEqual(function.fromlineno, 3) # XXX discussable, but that's what is expected by pylint right now
         self.assertEqual(function.tolineno, 5)
         self.assertEqual(function.decorators.fromlineno, 2)
@@ -387,22 +387,10 @@ class FileBuildTest(unittest.TestCase):
         self.assertEqual(module.statement(), module)
         self.assertEqual(module.statement(), module)
 
-    def test_module_locals(self):
-        """test the 'locals' dictionary of a astroid module"""
-        module = self.module
-        _locals = module.locals
-        self.assertEqual(_locals, module.globals)
-        keys = sorted(_locals.keys())
-        should = ['MY_DICT', 'NameNode', 'YO', 'YOUPI',
-                  '__revision__', 'global_access', 'modutils', 'four_args',
-                  'os', 'redirect']
-        should.sort()
-        self.assertEqual(keys, sorted(should))
-
     def test_function_base_props(self):
         """test base properties and method of a astroid function"""
         module = self.module
-        function = module['global_access']
+        function = module.down().down().right().right().right().right().right().right()
         self.assertEqual(function.name, 'global_access')
         self.assertEqual(function.doc, 'function test')
         self.assertEqual(function.fromlineno, 11)
@@ -411,19 +399,11 @@ class FileBuildTest(unittest.TestCase):
         self.assertEqual(function.parent.frame(), module)
         self.assertEqual(function.root(), module)
         self.assertEqual([n.name for n in function.args.args], ['key', 'val'])
-        self.assertEqual(function.type, 'function')
-
-    def test_function_locals(self):
-        """test the 'locals' dictionary of a astroid function"""
-        _locals = self.module['global_access'].locals
-        self.assertEqual(len(_locals), 4)
-        keys = sorted(_locals.keys())
-        self.assertEqual(keys, ['i', 'key', 'local', 'val'])
 
     def test_class_base_props(self):
         """test base properties and method of a astroid class"""
         module = self.module
-        klass = module['YO']
+        klass = module.down().down().right().right().right().right().right().right().right()
         self.assertEqual(klass.name, 'YO')
         self.assertEqual(klass.doc, 'hehe')
         self.assertEqual(klass.fromlineno, 25)
@@ -431,70 +411,22 @@ class FileBuildTest(unittest.TestCase):
         self.assertEqual(klass.frame(), klass)
         self.assertEqual(klass.parent.frame(), module)
         self.assertEqual(klass.root(), module)
-        self.assertEqual(klass.basenames, [])
-        if six.PY3:
-            self.assertTrue(klass.newstyle)
-        else:
-            self.assertFalse(klass.newstyle)
-
-    def test_class_locals(self):
-        """test the 'locals' dictionary of a astroid class"""
-        module = self.module
-        klass1 = module['YO']
-        locals1 = klass1.locals
-        keys = sorted(locals1.keys())
-        self.assertEqual(keys, ['__init__', 'a'])
-        klass2 = module['YOUPI']
-        locals2 = klass2.locals
-        keys = locals2.keys()
-        self.assertEqual(sorted(keys),
-                         ['__init__', 'class_attr', 'class_method',
-                          'method', 'static_method'])
-
-    def test_class_instance_attrs(self):
-        module = self.module
-        klass1 = module['YO']
-        klass2 = module['YOUPI']
-        self.assertEqual(list(klass1.instance_attrs.keys()), ['yo'])
-        self.assertEqual(list(klass2.instance_attrs.keys()), ['member'])
-
-    def test_class_basenames(self):
-        module = self.module
-        klass1 = module['YO']
-        klass2 = module['YOUPI']
-        self.assertEqual(klass1.basenames, [])
-        self.assertEqual(klass2.basenames, ['YO'])
 
     def test_method_base_props(self):
         """test base properties and method of a astroid method"""
-        klass2 = self.module['YOUPI']
+        klass2 = self.module.down().down().right().right().right().right().right().right().right().right()
         # "normal" method
-        method = klass2['method']
+        method = klass2.down().right().right().down().right().right()
         self.assertEqual(method.name, 'method')
         self.assertEqual([n.name for n in method.args.args], ['self'])
         self.assertEqual(method.doc, 'method test')
         self.assertEqual(method.fromlineno, 47)
-        self.assertEqual(method.type, 'method')
         # class method
-        method = klass2['class_method']
+        method = method.right().right().right()
         self.assertEqual([n.name for n in method.args.args], ['cls'])
-        self.assertEqual(method.type, 'classmethod')
         # static method
-        method = klass2['static_method']
+        method = method.left().left()
         self.assertEqual(method.args.args, [])
-        self.assertEqual(method.type, 'staticmethod')
-
-    def test_method_locals(self):
-        """test the 'locals' dictionary of a astroid method"""
-        method = self.module['YOUPI']['method']
-        _locals = method.locals
-        keys = sorted(_locals)
-        if sys.version_info < (3, 0):
-            self.assertEqual(len(_locals), 6)
-            self.assertEqual(keys, ['MY_DICT', 'a', 'autre', 'b', 'local', 'self'])
-        else:# ListComp variables are no more accessible outside
-            self.assertEqual(len(_locals), 4)
-            self.assertEqual(keys, ['MY_DICT', 'autre', 'local', 'self'])
 
     def test_unknown_encoding(self):
         with self.assertRaises(exceptions.AstroidSyntaxError):

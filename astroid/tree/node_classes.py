@@ -19,6 +19,7 @@
 """
 
 import functools
+import io
 import warnings
 import sys
 
@@ -52,8 +53,7 @@ class Statement(base.NodeNG):
 
 
 
-class BaseAssignName(base.ParentAssignTypeMixin,
-                     base.NodeNG):
+class BaseAssignName(base.ParentAssignTypeMixin, base.NodeNG):
     _other_fields = ('name',)
 
     def __init__(self, name=None, lineno=None, col_offset=None, parent=None):
@@ -138,13 +138,14 @@ class Arguments(base.AssignTypeMixin, base.NodeNG):
 
         return super(Arguments, self).fromlineno
 
+    @staticmethod
     def _format_args(args):
         values = []
         if not args:
             return ''
         for i, arg in enumerate(args):
             if isinstance(arg, Tuple):
-                values.append('(%s)' % _format_args(arg.elts))
+                values.append('(%s)' % self._format_args(arg.elts))
             else:
                 argname = arg.name
                 annotation = arg.annotation
@@ -162,15 +163,15 @@ class Arguments(base.AssignTypeMixin, base.NodeNG):
         """return arguments formatted as string"""
         result = []
         if self.positional_and_keyword:
-            result.append(_format_args(self.positional_and_keyword))
+            result.append(self._format_args(self.positional_and_keyword))
         if self.vararg:
-            result.append('*%s' % _format_args((self.vararg, )))
+            result.append('*%s' % self._format_args((self.vararg, )))
         if self.keyword_only:
             if not self.vararg:
                 result.append('*')
-            result.append(_format_args(self.keyword_only))
+            result.append(self._format_args(self.keyword_only))
         if self.kwarg:
-            result.append('**%s' % _format_args((self.kwarg, )))
+            result.append('**%s' % self._format_args((self.kwarg, )))
         return ', '.join(result)
 
 
@@ -968,7 +969,7 @@ class QualifiedNameMixin(object):
         return '%s.%s' % (node.parent.frame().qname(), node.name)
 
 
-class Module(QualifiedNameMixin):
+class Module(QualifiedNameMixin, base.NodeNG):
     _astroid_fields = ('body',)
 
     fromlineno = 0
@@ -1182,7 +1183,7 @@ else:
         """class representing a ListComp node"""
 
 
-class LambdaFunctionMixin(QualifiedNameMixin, base.FilterStmtsMixin):
+class LambdaFunctionMixin(QualifiedNameMixin, base.FilterStmtsMixin, base.NodeNG):
     """Common code for lambda and functions."""
 
     def argnames(self):
@@ -1253,7 +1254,7 @@ class FunctionDef(LambdaFunctionMixin, Statement):
         # lineno is the line number of the first decorator, we want the def
         # statement lineno
         lineno = self.lineno
-        if self.decorators is not None:
+        if self.decorators:
             lineno += sum(node.tolineno - node.lineno + 1
                           for node in self.decorators.nodes)
 
@@ -1314,11 +1315,3 @@ class ClassDef(QualifiedNameMixin, base.FilterStmtsMixin, Statement):
         start from the "class" position whatever the given lineno
         """
         return self.fromlineno, self.tolineno
-
-    @property
-    def basenames(self):
-        """Get the list of parent class names, as they appear in the class definition."""
-        return [bnode.as_string() for bnode in self.bases]
-
-    def has_base(self, node):
-        return node in self.bases
