@@ -400,14 +400,15 @@ class ArgumentsNodeTC(unittest.TestCase):
                 b): pass
             x = lambda x: None
         ''')
-        self.assertEqual(ast['func'].args.fromlineno, 2)
-        self.assertFalse(ast['func'].args.is_statement)
+        func = ast.down().down()
+        self.assertEqual(func.args.fromlineno, 2)
+        self.assertFalse(func.args.is_statement)
         # xlambda = next(ast['x'].infer())
         # self.assertEqual(xlambda.args.fromlineno, 4)
         # self.assertEqual(xlambda.args.tolineno, 4)
         # self.assertFalse(xlambda.args.is_statement)
         if sys.version_info < (3, 0):
-            self.assertEqual(ast['func'].args.tolineno, 3)
+            self.assertEqual(func.args.tolineno, 3)
         else:
             self.skipTest('FIXME  http://bugs.python.org/issue10445 '
                           '(no line number on function args)')
@@ -634,14 +635,6 @@ class DictTest(unittest.TestCase):
         self.assertEqual([(key.value, value.value) for (key, value) in node.items],
                          [(1, 2), (2, 3)])
 
-def _test_dict_interface(self, node, test_attr):
-    self.assertIs(node[test_attr], node[test_attr])
-    self.assertIn(test_attr, node)
-    node.keys()
-    node.values()
-    node.items()
-    iter(node)
-
 
 # TODO: Scoped nodes
 
@@ -656,9 +649,6 @@ class ModuleLoader(resources.SysPathSetup):
 
 
 class ModuleNodeTest(ModuleLoader, unittest.TestCase):
-
-    def test_dict_interface(self):
-        _test_dict_interface(self, self.module, 'YO')
 
     def test_public_names(self):
         m = builder.parse('''
@@ -759,25 +749,24 @@ class ModuleNodeTest(ModuleLoader, unittest.TestCase):
 
 class FunctionNodeTest(ModuleLoader, unittest.TestCase):
 
-    def test_dict_interface(self):
-        _test_dict_interface(self, self.module['global_access'], 'local')
-
     def test_default_value(self):
-        func = self.module2['make_class']
-        self.assertIsInstance(func.args.default_value('base'), nodes.Attribute)
-        self.assertRaises(NoDefault, func.args.default_value, 'args')
-        self.assertRaises(NoDefault, func.args.default_value, 'kwargs')
-        self.assertRaises(NoDefault, func.args.default_value, 'any')
+        make_class = self.module2.down().down()
+        for i in range(41):
+            make_class = make_class.right()
+        self.assertIsInstance(make_class.args.default_value('base'), nodes.Attribute)
+        self.assertRaises(NoDefault, make_class.args.default_value, 'args')
+        self.assertRaises(NoDefault, make_class.args.default_value, 'kwargs')
+        self.assertRaises(NoDefault, make_class.args.default_value, 'any')
 
     def test_navigation(self):
-        function = self.module['global_access']
-        self.assertEqual(function.statement(), function)
-        l_sibling = function.previous_sibling()
+        global_access = self.module.down().down().right().right().right().right().right().right()
+        self.assertEqual(global_access.statement(), global_access)
+        l_sibling = global_access.previous_sibling()
         # check taking parent if child is not a stmt
         self.assertIsInstance(l_sibling, nodes.Assign)
-        child = function.args.args[0]
+        child = global_access.args.args[0]
         self.assertIs(l_sibling, child.previous_sibling())
-        r_sibling = function.next_sibling()
+        r_sibling = global_access.next_sibling()
         self.assertIsInstance(r_sibling, nodes.ClassDef)
         self.assertEqual(r_sibling.name, 'YO')
         self.assertIs(r_sibling, child.next_sibling())
@@ -795,28 +784,32 @@ class FunctionNodeTest(ModuleLoader, unittest.TestCase):
                 "nested arguments test"
         '''
         tree = builder.parse(code)
-        func = tree['nested_args']
-        self.assertEqual(sorted(func.locals), ['a', 'b', 'c', 'd'])
+        func = tree.down().down()
         self.assertEqual(func.args.format_args(), 'a, b, c, d')
 
     def test_four_args(self):
-        func = self.module['four_args']
-        #self.assertEqual(func.args.args, ['a', ('b', 'c', 'd')])
-        local = sorted(func.keys())
-        self.assertEqual(local, ['a', 'b', 'c', 'd'])
-        self.assertEqual(func.type, 'function')
+        four_args = self.module.down().down().rightmost()
+        self.assertEqual(four_args.args.args, ['a', ('b', 'c', 'd')])
+        self.assertEqual(four_args.type, 'function')
 
     def test_format_args(self):
-        func = self.module2['make_class']
-        self.assertEqual(func.args.format_args(),
+        make_class = self.module2.down().down()
+        for i in range(41):
+            make_class = make_class.right()
+        self.assertEqual(make_class.args.format_args(),
                          'any, base=data.module.YO, *args, **kwargs')
-        func = self.module['four_args']
-        self.assertEqual(func.args.format_args(), 'a, b, c, d')
+        four_args = self.module.down().down().rightmost()
+        self.assertEqual(four_args.args.format_args(), 'a, b, c, d')
 
     def test_is_generator(self):
-        self.assertTrue(self.module2['generator'].is_generator())
-        self.assertFalse(self.module2['not_a_generator'].is_generator())
-        self.assertFalse(self.module2['make_class'].is_generator())
+        not_a_generator = self.module2.down().down().rightmost().left().left()
+        self.assertFalse(not_a_generator.is_generator())
+        generator = not_a_generator.left()
+        self.assertTrue(generator.is_generator())
+        make_class = self.module2.down().down()
+        for i in range(41):
+            make_class = make_class.right()
+        self.assertFalse(make_class.is_generator())
 
         # TODO: enable?
 ##     def test_raises(self):
@@ -832,7 +825,8 @@ class FunctionNodeTest(ModuleLoader, unittest.TestCase):
 
     def test_lambda_qname(self):
         astroid = builder.parse('lmbd = lambda: None', __name__)
-        self.assertEqual('%s.<lambda>' % __name__, astroid['lmbd'].parent.value.qname())
+        lmbd = astroid.down().down()
+        self.assertEqual('%s.<lambda>' % __name__, lmbd.parent.value.qname())
 
     def test_argnames(self):
         if sys.version_info < (3, 0):
@@ -840,14 +834,15 @@ class FunctionNodeTest(ModuleLoader, unittest.TestCase):
         else:
             code = 'def f(a, b, c, *args, **kwargs): pass'
         astroid = builder.parse(code, __name__)
-        self.assertEqual(astroid['f'].argnames(), ['a', 'b', 'c', 'args', 'kwargs'])
+        f = astroid.down().down()
+        self.assertEqual(f.argnames(), ['a', 'b', 'c', 'args', 'kwargs'])
 
 
 
 class ClassNodeTest(ModuleLoader, unittest.TestCase):
 
     def test_navigation(self):
-        klass = self.module['YO']
+        klass = self.module.down().down().right().right().right().right().right().right().right()
         self.assertEqual(klass.statement(), klass)
         l_sibling = klass.previous_sibling()
         self.assertTrue(isinstance(l_sibling, nodes.FunctionDef), l_sibling)
@@ -869,10 +864,12 @@ class ClassNodeTest(ModuleLoader, unittest.TestCase):
                 pass
         '''
         astroid = builder.parse(data)
-        self.assertEqual(astroid['g1'].fromlineno, 4)
-        self.assertEqual(astroid['g1'].tolineno, 5)
-        self.assertEqual(astroid['g2'].fromlineno, 9)
-        self.assertEqual(astroid['g2'].tolineno, 10)
+        g1 = astroid.down().down()
+        g2 = astroid.down().down().right()
+        self.assertEqual(g1.fromlineno, 4)
+        self.assertEqual(g1.tolineno, 5)
+        self.assertEqual(g2.fromlineno, 9)
+        self.assertEqual(g2.tolineno, 10)
 
 
 if __name__ == '__main__':

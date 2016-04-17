@@ -174,12 +174,12 @@ class Arguments(base.AssignTypeMixin, base.NodeNG):
             result.append('**%s' % self._format_args((self.kwarg, )))
         return ', '.join(result)
 
-
+    @staticmethod
     def _find_arg(argname, args, rec=False):
         for i, arg in enumerate(args):
             if isinstance(arg, Tuple):
                 if rec:
-                    found = _find_arg(argname, arg.elts)
+                    found = self._find_arg(argname, arg.elts)
                     if found[0] is not None:
                         return found
             elif arg.name == argname:
@@ -192,7 +192,7 @@ class Arguments(base.AssignTypeMixin, base.NodeNG):
         :raise `NoDefault`: if there is no default value defined
         """
         for place in (self.positional_and_keyword, self.keyword_only):
-            i = _find_arg(argname, place)[0]
+            i = self._find_arg(argname, place)[0]
             if i is not None:
                 value = place[i]
                 if not value.default:

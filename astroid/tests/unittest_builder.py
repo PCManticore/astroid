@@ -389,34 +389,32 @@ class FileBuildTest(unittest.TestCase):
 
     def test_function_base_props(self):
         """test base properties and method of a astroid function"""
-        module = self.module
-        function = module.down().down().right().right().right().right().right().right()
-        self.assertEqual(function.name, 'global_access')
-        self.assertEqual(function.doc, 'function test')
-        self.assertEqual(function.fromlineno, 11)
-        self.assertTrue(function.parent)
-        self.assertEqual(function.frame(), function)
-        self.assertEqual(function.parent.frame(), module)
-        self.assertEqual(function.root(), module)
-        self.assertEqual([n.name for n in function.args.args], ['key', 'val'])
+        global_access = module.down().down().right().right().right().right().right().right()
+        self.assertEqual(global_access.name, 'global_access')
+        self.assertEqual(global_access.doc, 'function test')
+        self.assertEqual(global_access.fromlineno, 11)
+        self.assertTrue(global_access.parent)
+        self.assertEqual(global_access.frame(), global_access)
+        self.assertEqual(global_access.parent.frame(), module)
+        self.assertEqual(global_access.root(), module)
+        self.assertEqual([n.name for n in global_access.args.args], ['key', 'val'])
 
     def test_class_base_props(self):
         """test base properties and method of a astroid class"""
-        module = self.module
-        klass = module.down().down().right().right().right().right().right().right().right()
-        self.assertEqual(klass.name, 'YO')
-        self.assertEqual(klass.doc, 'hehe')
-        self.assertEqual(klass.fromlineno, 25)
-        self.assertTrue(klass.parent)
-        self.assertEqual(klass.frame(), klass)
-        self.assertEqual(klass.parent.frame(), module)
-        self.assertEqual(klass.root(), module)
+        yo = self.module.down().down().right().right().right().right().right().right().right()
+        self.assertEqual(yo.name, 'YO')
+        self.assertEqual(yo.doc, 'hehe')
+        self.assertEqual(yo.fromlineno, 25)
+        self.assertTrue(yo.parent)
+        self.assertEqual(yo.frame(), yo)
+        self.assertEqual(yo.parent.frame(), module)
+        self.assertEqual(yo.root(), module)
 
     def test_method_base_props(self):
         """test base properties and method of a astroid method"""
-        klass2 = self.module.down().down().right().right().right().right().right().right().right().right()
+        youpi = self.module.down().down().right().right().right().right().right().right().right().right()
         # "normal" method
-        method = klass2.down().right().right().down().right().right()
+        method = youpi.down().right().right().down().right().right()
         self.assertEqual(method.name, 'method')
         self.assertEqual([n.name for n in method.args.args], ['self'])
         self.assertEqual(method.doc, 'method test')
