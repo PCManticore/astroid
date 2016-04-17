@@ -71,22 +71,24 @@ class NonRegressionTests(resources.AstroidCacheSetupMixin,
         self.assertEqual(default.name, 'x')
         self.assertEqual(next(default.infer()).value, True)
 
-    def test_unicode_in_docstring(self):
-        # Crashed for astroid==1.4.1
-        # Test for https://bitbucket.org/logilab/astroid/issues/273/
+    # TODO: inference used in test
 
-        # In a regular file, "coding: utf-8" would have been used.
-        node = extract_node(u'''
-        from __future__ import unicode_literals
+    # def test_unicode_in_docstring(self):
+    #     # Crashed for astroid==1.4.1
+    #     # Test for https://bitbucket.org/logilab/astroid/issues/273/
 
-        class MyClass(object):
-            def method(self):
-                "With unicode : %s "
+    #     # In a regular file, "coding: utf-8" would have been used.
+    #     node = extract_node(u'''
+    #     from __future__ import unicode_literals
 
-        instance = MyClass()
-        ''' % u"\u2019")
+    #     class MyClass(object):
+    #         def method(self):
+    #             "With unicode : %s "
 
-        next(node.value.infer()).as_string()
+    #     instance = MyClass()
+    #     ''' % u"\u2019")
+
+    #     next(node.value.infer()).as_string()
 
     def test_qname_not_on_generatorexp(self):
         node = extract_node('''(i for i in range(10))''')

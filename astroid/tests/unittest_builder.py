@@ -389,14 +389,14 @@ class FileBuildTest(unittest.TestCase):
 
     def test_function_base_props(self):
         """test base properties and method of a astroid function"""
-        global_access = module.down().down().right().right().right().right().right().right()
+        global_access = self.module.down().down().right().right().right().right().right().right()
         self.assertEqual(global_access.name, 'global_access')
         self.assertEqual(global_access.doc, 'function test')
         self.assertEqual(global_access.fromlineno, 11)
         self.assertTrue(global_access.parent)
         self.assertEqual(global_access.frame(), global_access)
-        self.assertEqual(global_access.parent.frame(), module)
-        self.assertEqual(global_access.root(), module)
+        self.assertEqual(global_access.parent.frame(), self.module)
+        self.assertEqual(global_access.root(), self.module)
         self.assertEqual([n.name for n in global_access.args.args], ['key', 'val'])
 
     def test_class_base_props(self):
@@ -407,8 +407,8 @@ class FileBuildTest(unittest.TestCase):
         self.assertEqual(yo.fromlineno, 25)
         self.assertTrue(yo.parent)
         self.assertEqual(yo.frame(), yo)
-        self.assertEqual(yo.parent.frame(), module)
-        self.assertEqual(yo.root(), module)
+        self.assertEqual(yo.parent.frame(), self.module)
+        self.assertEqual(yo.root(), self.module)
 
     def test_method_base_props(self):
         """test base properties and method of a astroid method"""

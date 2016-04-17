@@ -20,21 +20,22 @@ import unittest
 from astroid import builder
 from astroid import nodes
 from astroid import test_utils
-from astroid import util as astroid_util
+from astroid import util
 
 
 class InferenceUtil(unittest.TestCase):
 
     def test_not_exclusive(self):
-        module = builder.parse("""
-        x = 10
+        code = """
+        x = 10 #@
         for x in range(5):
             print (x)
 
         if x > 0:
             print ('#' * x)
-        """, __name__, __file__)
-        xass1 = module.locals['x'][0]
+        """
+        module = builder.parse(code, __name__, __file__)
+        xass1 = test_utils.extract_node(code)
         assert xass1.lineno == 2
         xnames = [n for n in module.nodes_of_class(nodes.Name) if n.name == 'x']
         assert len(xnames) == 3
@@ -43,23 +44,18 @@ class InferenceUtil(unittest.TestCase):
         self.assertEqual(util.are_exclusive(xass1, xnames[2]), False)
 
     def test_if(self):
-        module = builder.parse('''
+        nodes = test_utils.extract_node('''
         if 1:
-            a = 1
-            a = 2
+            a = 1 #@
+            a = 2 #@
         elif 2:
-            a = 12
-            a = 13
+            a = 12 #@
+            a = 13 #@
         else:
-            a = 3
-            a = 4
+            a = 3 #@
+            a = 4 #@
         ''')
-        a1 = module.locals['a'][0]
-        a2 = module.locals['a'][1]
-        a3 = module.locals['a'][2]
-        a4 = module.locals['a'][3]
-        a5 = module.locals['a'][4]
-        a6 = module.locals['a'][5]
+        a1, a2, a3, a4, a5, a6 = nodes
         self.assertEqual(util.are_exclusive(a1, a2), False)
         self.assertEqual(util.are_exclusive(a1, a3), True)
         self.assertEqual(util.are_exclusive(a1, a5), True)
@@ -68,24 +64,21 @@ class InferenceUtil(unittest.TestCase):
         self.assertEqual(util.are_exclusive(a5, a6), False)
 
     def test_try_except(self):
-        module = builder.parse('''
+        nodes = test_utils.extract_node('''
         try:
-            def exclusive_func2():
+            def exclusive_func2(): #@
                 "docstring"
         except TypeError:
-            def exclusive_func2():
+            def exclusive_func2(): #@
                 "docstring"
         except:
-            def exclusive_func2():
+            def exclusive_func2(): #@
                 "docstring"
         else:
-            def exclusive_func2():
+            def exclusive_func2(): #@
                 "this one redefine the one defined line 42"
         ''')
-        f1 = module.locals['exclusive_func2'][0]
-        f2 = module.locals['exclusive_func2'][1]
-        f3 = module.locals['exclusive_func2'][2]
-        f4 = module.locals['exclusive_func2'][3]
+        f1, f2, f3, f4 = nodes
         self.assertEqual(util.are_exclusive(f1, f2), True)
         self.assertEqual(util.are_exclusive(f1, f3), True)
         self.assertEqual(util.are_exclusive(f1, f4), False)

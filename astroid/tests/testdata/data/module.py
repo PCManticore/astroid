@@ -8,7 +8,7 @@ from astroid.utils import *
 import os.path
 MY_DICT = {}
 
-def global_access(key, val):
+def global_access(key, val): #@
     """function test"""
     local = 1
     MY_DICT[key] = val
@@ -22,7 +22,7 @@ def global_access(key, val):
         return local
 
 
-class YO:
+class YO: #@
     """hehe"""
     a = 1
     
@@ -38,13 +38,13 @@ class YO:
 
 
 
-class YOUPI(YO):
+class YOUPI(YO): #@
     class_attr = None
     
     def __init__(self):
         self.member = None
     
-    def method(self):
+    def method(self): #@
         """method test"""
         try:
             MY_DICT = {}
@@ -59,18 +59,18 @@ class YOUPI(YO):
         finally:
             return local
     
-    def static_method():
+    def static_method(): #@
         """static method test"""
         assert MY_DICT, '???'
     static_method = staticmethod(static_method)
     
-    def class_method(cls):
+    def class_method(cls): #@
         """class method test"""
         pass
     class_method = classmethod(class_method)
 
 
-def four_args(a, b, c, d):
+def four_args(a, b, c, d): #@
     """four arguments (was nested_args)"""
     pass
     while 1:
