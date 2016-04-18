@@ -30,10 +30,6 @@ install_requires = ['lazy_object_proxy', 'six', 'wrapt']
 
 if sys.version_info <= (3, 3):
     install_requires.append('singledispatch')
-    install_requires.append('enum34')
-
-    if sys.version_info < (3, 0):
-        install_requires.append('funcsigs')
 
 license = 'LGPL'
 
