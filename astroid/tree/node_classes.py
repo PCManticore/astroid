@@ -92,7 +92,7 @@ class Empty(base.NodeNG):
 
 
 class AssignName(BaseAssignName):
-    """class representing an AssignName node"""
+    pass
 
 
 class Parameter(BaseAssignName):
@@ -110,7 +110,7 @@ class Parameter(BaseAssignName):
 
 
 class DelName(base.NodeNG):
-    """class representing a DelName node"""
+
     _other_fields = ('name',)
 
     def __init__(self, name=None, lineno=None, col_offset=None, parent=None):
@@ -119,7 +119,7 @@ class DelName(base.NodeNG):
 
 
 class Name(base.NodeNG):
-    """class representing a Name node"""
+
     _other_fields = ('name',)
 
     def __init__(self, name=None, lineno=None, col_offset=None, parent=None):
@@ -128,7 +128,6 @@ class Name(base.NodeNG):
     
 
 class Arguments(base.NodeNG):
-    """class representing an Arguments node"""
 
     _astroid_fields = ('args', 'vararg', 'kwarg', 'keyword_only', 'positional_only')
 
@@ -238,7 +237,7 @@ class Arguments(base.NodeNG):
 
 
 class AssignAttr(base.NodeNG):
-    """class representing an AssignAttr node"""
+
     _astroid_fields = ('expr',)
     _other_fields = ('attrname',)
     expr = Empty
@@ -252,7 +251,7 @@ class AssignAttr(base.NodeNG):
 
 
 class Assert(Statement):
-    """class representing an Assert node"""
+
     _astroid_fields = ('test', 'fail',)
     test = Empty
     fail = Empty
@@ -263,7 +262,7 @@ class Assert(Statement):
 
 
 class Assign(Statement):
-    """class representing an Assign node"""
+
     _astroid_fields = ('targets', 'value',)
     targets = Empty
     value = Empty
@@ -274,7 +273,7 @@ class Assign(Statement):
 
 
 class AugAssign(Statement):
-    """class representing an AugAssign node"""
+
     _astroid_fields = ('target', 'value')
     _other_fields = ('op',)
     target = Empty
@@ -290,7 +289,7 @@ class AugAssign(Statement):
 
 
 class Repr(base.NodeNG):
-    """class representing a Repr node"""
+
     _astroid_fields = ('value',)
     value = Empty
 
@@ -299,7 +298,7 @@ class Repr(base.NodeNG):
 
 
 class BinOp(base.NodeNG):
-    """class representing a BinOp node"""
+
     _astroid_fields = ('left', 'right')
     _other_fields = ('op',)
     left = Empty
@@ -315,7 +314,7 @@ class BinOp(base.NodeNG):
 
 
 class BoolOp(base.NodeNG):
-    """class representing a BoolOp node"""
+
     _astroid_fields = ('values',)
     _other_fields = ('op',)
     values = Empty
@@ -329,11 +328,11 @@ class BoolOp(base.NodeNG):
 
 
 class Break(Statement):
-    """class representing a Break node"""
+    pass
 
 
 class Call(base.NodeNG):
-    """class representing a Call node"""
+
     _astroid_fields = ('func', 'args', 'keywords')
     func = Empty
     args = Empty
@@ -356,7 +355,7 @@ class Call(base.NodeNG):
 
 
 class Compare(base.NodeNG):
-    """class representing a Compare node"""
+
     _astroid_fields = ('left', 'comparators')
     _other_fields = ('ops',)
     left = Empty
@@ -372,18 +371,16 @@ class Compare(base.NodeNG):
         self.comparators = comparators
 
     def get_children(self):
-        """override get_children for tuple fields"""
         yield self.left
         for comparator in self.comparators:
             yield comparator
 
     def last_child(self):
-        """override last_child"""
         return self.comparators[-1]
 
 
 class Comprehension(base.NodeNG):
-    """class representing a Comprehension node"""
+
     _astroid_fields = ('target', 'iter', 'ifs')
     target = Empty
     iter = Empty
@@ -399,7 +396,7 @@ class Comprehension(base.NodeNG):
 
 
 class Const(base.NodeNG):
-    """represent a constant node like num, str, bytes"""
+    """Represent a constant node like num, str, bytes."""
     _other_fields = ('value',)
 
     def __init__(self, value, lineno=None, col_offset=None, parent=None):
@@ -408,17 +405,15 @@ class Const(base.NodeNG):
 
     
 class NameConstant(Const):
-    """Represents a builtin singleton, at the moment True, False, None,
-    and NotImplemented.
-    """
+    """Represents a builtin singleton, at the moment True, False, None and NotImplemented."""
 
 
 class Continue(Statement):
-    """class representing a Continue node"""
+    pass
 
 
 class Decorators(base.NodeNG):
-    """class representing a Decorators node"""
+
     _astroid_fields = ('nodes',)
     nodes = Empty
 
@@ -427,7 +422,7 @@ class Decorators(base.NodeNG):
 
 
 class DelAttr(base.NodeNG):
-    """class representing a DelAttr node"""
+
     _astroid_fields = ('expr',)
     _other_fields = ('attrname',)
     expr = Empty
@@ -441,7 +436,7 @@ class DelAttr(base.NodeNG):
 
 
 class Delete(Statement):
-    """class representing a Delete node"""
+
     _astroid_fields = ('targets',)
     targets = Empty
 
@@ -450,7 +445,7 @@ class Delete(Statement):
 
 
 class Dict(base.NodeNG):
-    """class representing a Dict node"""
+
     _astroid_fields = ('keys', 'values')
 
     def __init__(self, lineno=None, col_offset=None, parent=None):
@@ -481,7 +476,7 @@ class Dict(base.NodeNG):
 
 
 class Expr(Statement):
-    """class representing a Expr node"""
+
     _astroid_fields = ('value',)
     value = Empty
 
@@ -490,11 +485,11 @@ class Expr(Statement):
 
 
 class Ellipsis(base.NodeNG): # pylint: disable=redefined-builtin
-    """class representing an Ellipsis node"""
+    pass
 
 
 class ExceptHandler(Statement):
-    """class representing an ExceptHandler node"""
+
     _astroid_fields = ('type', 'name', 'body',)
     type = Empty
     name = Empty
@@ -516,7 +511,7 @@ class ExceptHandler(Statement):
 
 
 class Exec(Statement):
-    """class representing an Exec node"""
+
     _astroid_fields = ('expr', 'globals', 'locals')
     expr = Empty
     globals = Empty
@@ -529,7 +524,7 @@ class Exec(Statement):
 
 
 class ExtSlice(base.NodeNG):
-    """class representing an ExtSlice node"""
+
     _astroid_fields = ('dims',)
     dims = Empty
 
@@ -538,7 +533,7 @@ class ExtSlice(base.NodeNG):
 
 
 class For(base.BlockRangeMixIn, Statement):
-    """class representing a For node"""
+
     _astroid_fields = ('target', 'iter', 'body', 'orelse',)
     target = Empty
     iter = Empty
@@ -573,7 +568,7 @@ class Await(base.NodeNG):
 
 
 class ImportFrom(Statement):
-    """class representing a ImportFrom node"""
+
     _other_fields = ('modname', 'names', 'level')
 
     def __init__(self, fromname, names, level=0, lineno=None,
@@ -585,7 +580,7 @@ class ImportFrom(Statement):
 
 
 class Attribute(base.NodeNG):
-    """class representing a Attribute node"""
+
     _astroid_fields = ('expr',)
     _other_fields = ('attrname',)
     expr = Empty
@@ -599,7 +594,7 @@ class Attribute(base.NodeNG):
 
 
 class Global(Statement):
-    """class representing a Global node"""
+
     _other_fields = ('names',)
 
     def __init__(self, names, lineno=None, col_offset=None, parent=None):
@@ -608,7 +603,7 @@ class Global(Statement):
 
 
 class If(base.BlockRangeMixIn, Statement):
-    """class representing an If node"""
+
     _astroid_fields = ('test', 'body', 'orelse')
     test = Empty
     body = Empty
@@ -634,7 +629,7 @@ class If(base.BlockRangeMixIn, Statement):
 
 
 class IfExp(base.NodeNG):
-    """class representing an IfExp node"""
+
     _astroid_fields = ('test', 'body', 'orelse')
     test = Empty
     body = Empty
@@ -647,7 +642,7 @@ class IfExp(base.NodeNG):
 
 
 class Import(Statement):
-    """class representing an Import node"""
+
     _other_fields = ('names',)
 
     def __init__(self, names=None, lineno=None, col_offset=None, parent=None):
@@ -656,7 +651,7 @@ class Import(Statement):
 
 
 class Index(base.NodeNG):
-    """class representing an Index node"""
+
     _astroid_fields = ('value',)
     value = Empty
 
@@ -665,7 +660,7 @@ class Index(base.NodeNG):
 
 
 class Keyword(base.NodeNG):
-    """class representing a Keyword node"""
+
     _astroid_fields = ('value',)
     _other_fields = ('arg',)
     value = Empty
@@ -679,7 +674,7 @@ class Keyword(base.NodeNG):
 
 
 class List(BaseContainer):
-    """class representing a List node"""
+
     _other_fields = ('ctx',)
 
     def __init__(self, ctx=None, lineno=None,
@@ -689,7 +684,7 @@ class List(BaseContainer):
 
 
 class Nonlocal(Statement):
-    """class representing a Nonlocal node"""
+
     _other_fields = ('names',)
 
     def __init__(self, names, lineno=None, col_offset=None, parent=None):
@@ -698,11 +693,11 @@ class Nonlocal(Statement):
 
 
 class Pass(Statement):
-    """class representing a Pass node"""
+    pass
 
 
 class Print(Statement):
-    """class representing a Print node"""
+
     _astroid_fields = ('dest', 'values',)
     dest = Empty
     values = Empty
@@ -717,7 +712,7 @@ class Print(Statement):
 
 
 class Raise(Statement):
-    """class representing a Raise node"""
+
     _astroid_fields = ('exc', 'cause', 'traceback')
 
     def postinit(self, exc=Empty, cause=Empty, traceback=Empty):
@@ -727,7 +722,7 @@ class Raise(Statement):
 
 
 class Return(Statement):
-    """class representing a Return node"""
+
     _astroid_fields = ('value',)
     value = Empty
 
@@ -736,11 +731,11 @@ class Return(Statement):
 
 
 class Set(BaseContainer):
-    """class representing a Set node"""
+    pass
     
 
 class Slice(base.NodeNG):
-    """class representing a Slice node"""
+
     _astroid_fields = ('lower', 'upper', 'step')
     lower = Empty
     upper = Empty
@@ -753,7 +748,7 @@ class Slice(base.NodeNG):
 
 
 class Starred(base.NodeNG):
-    """class representing a Starred node"""
+
     _astroid_fields = ('value',)
     _other_fields = ('ctx', )
     value = Empty
@@ -768,7 +763,7 @@ class Starred(base.NodeNG):
 
 
 class Subscript(base.NodeNG):
-    """class representing a Subscript node"""
+
     _astroid_fields = ('value', 'slice')
     _other_fields = ('ctx', )
     value = Empty
@@ -785,7 +780,7 @@ class Subscript(base.NodeNG):
 
 
 class TryExcept(base.BlockRangeMixIn, Statement):
-    """class representing a TryExcept node"""
+
     _astroid_fields = ('body', 'handlers', 'orelse',)
     body = Empty
     handlers = Empty
@@ -810,7 +805,7 @@ class TryExcept(base.BlockRangeMixIn, Statement):
 
 
 class TryFinally(base.BlockRangeMixIn, Statement):
-    """class representing a TryFinally node"""
+
     _astroid_fields = ('body', 'finalbody',)
     body = Empty
     finalbody = Empty
@@ -830,7 +825,6 @@ class TryFinally(base.BlockRangeMixIn, Statement):
 
 
 class Tuple(BaseContainer):
-    """class representing a Tuple node"""
 
     _other_fields = ('ctx',)
 
@@ -841,7 +835,7 @@ class Tuple(BaseContainer):
 
 
 class UnaryOp(base.NodeNG):
-    """class representing an UnaryOp node"""
+
     _astroid_fields = ('operand',)
     _other_fields = ('op',)
     operand = Empty
@@ -855,7 +849,7 @@ class UnaryOp(base.NodeNG):
 
 
 class While(base.BlockRangeMixIn, Statement):
-    """class representing a While node"""
+
     _astroid_fields = ('test', 'body', 'orelse',)
     test = Empty
     body = Empty
@@ -876,7 +870,7 @@ class While(base.BlockRangeMixIn, Statement):
 
 
 class With(base.BlockRangeMixIn, Statement):
-    """class representing a With node"""
+
     _astroid_fields = ('items', 'body')
 
     def __init__(self, lineno=None, col_offset=None, parent=None):
@@ -908,7 +902,7 @@ class AsyncWith(With):
 
 
 class Yield(base.NodeNG):
-    """class representing a Yield node"""
+
     _astroid_fields = ('value',)
     value = Empty
 
@@ -917,7 +911,7 @@ class Yield(base.NodeNG):
 
 
 class YieldFrom(Yield):
-    """ Class representing a YieldFrom node. """
+    pass
 
 
 class DictUnpack(base.NodeNG):
@@ -1113,7 +1107,7 @@ class SetComp(ComprehensionScope):
 
 
 class _ListComp(base.NodeNG):
-    """class representing a ListComp node"""
+
     _astroid_fields = ('elt', 'generators')
     elt = Empty
     generators = Empty
@@ -1125,14 +1119,14 @@ class _ListComp(base.NodeNG):
 
 if six.PY3:
     class ListComp(_ListComp, ComprehensionScope):
-        """class representing a ListComp node"""
+
         # _other_other_fields = ('locals',)
 
         def __init__(self, lineno=None, col_offset=None, parent=None):
             super(ListComp, self).__init__(lineno, col_offset, parent)
 else:
     class ListComp(_ListComp):
-        """class representing a ListComp node"""
+        pass
 
 
 class LambdaFunctionMixin(base.NodeNG):
