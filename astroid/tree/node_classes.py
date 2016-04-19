@@ -1288,12 +1288,6 @@ class ClassDef(Statement):
         self.keywords = keywords
 
     @property
-    def metaclass(self):
-        for keyword in self.keywords:
-            if keyword.arg == 'metaclass':
-                return keyword.value
-
-    @property
     def blockstart_tolineno(self):
         if self.bases:
             return self.bases[-1].tolineno

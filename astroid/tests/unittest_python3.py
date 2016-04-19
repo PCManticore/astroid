@@ -89,15 +89,6 @@ class Python3TC(unittest.TestCase):
                          '\n\nclass Test(metaclass=ABCMeta):\n    pass\n')
 
     @test_utils.require_version('3.0')
-    def test_metaclass_is_defined(self):
-        klass = test_utils.extract_node("""
-        from abc import ABCMeta
-        class Test(metaclass=ABCMeta): pass
-        """)
-        metaclass = klass.metaclass
-        self.assertEqual(metaclass.name, 'ABCMeta')
-
-    @test_utils.require_version('3.0')
     def test_annotation_support(self):
         func = test_utils.extract_node("""
         def test(a: int, b: str, c: None, d, e,
