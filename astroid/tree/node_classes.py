@@ -17,7 +17,7 @@
 # with astroid. If not, see <http://www.gnu.org/licenses/>.
 """Module for some node classes. More nodes in scoped_nodes.py
 """
-
+import abc
 import functools
 import io
 import warnings
@@ -28,6 +28,20 @@ import six
 from astroid import exceptions
 from astroid.tree import base
 from astroid import util
+
+
+@six.add_metaclass(abc.ABCMeta)
+class BaseContainer(base.NodeNG):
+    """Base class for Set, FrozenSet, Tuple and List."""
+
+    _astroid_fields = ('elts',)
+
+    def __init__(self, lineno=None, col_offset=None, parent=None):
+        self.elts = []
+        super(BaseContainer, self).__init__(lineno, col_offset, parent)
+
+    def postinit(self, elts):
+        self.elts = elts
 
 
 class Statement(base.NodeNG):
@@ -672,7 +686,7 @@ class Keyword(base.NodeNG):
         self.value = value
 
 
-class List(base.BaseContainer):
+class List(BaseContainer):
     """class representing a List node"""
     _other_fields = ('ctx',)
 
@@ -751,7 +765,7 @@ class Return(Statement):
 
 
 # TODO: check BaseCOntainer
-class Set(base.BaseContainer):
+class Set(BaseContainer):
     """class representing a Set node"""
     
 
@@ -845,7 +859,7 @@ class TryFinally(base.BlockRangeMixIn, Statement):
         return self._elsed_block_range(lineno, self.finalbody)
 
 
-class Tuple(base.BaseContainer):
+class Tuple(BaseContainer):
     """class representing a Tuple node"""
 
     _other_fields = ('ctx',)

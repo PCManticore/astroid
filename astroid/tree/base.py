@@ -398,17 +398,3 @@ class BlockRangeMixIn(object):
                 return lineno, orelse[-1].tolineno
             return lineno, orelse[0].fromlineno - 1
         return lineno, last or self.tolineno
-
-
-@six.add_metaclass(abc.ABCMeta)
-class BaseContainer(NodeNG):
-    """Base class for Set, FrozenSet, Tuple and List."""
-
-    _astroid_fields = ('elts',)
-
-    def __init__(self, lineno=None, col_offset=None, parent=None):
-        self.elts = []
-        super(BaseContainer, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, elts):
-        self.elts = elts
