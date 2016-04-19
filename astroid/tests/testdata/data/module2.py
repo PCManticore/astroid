@@ -1,5 +1,5 @@
 from __future__ import print_function
-from data.module import YO, YOUPI
+from data.module import YO, YOUPI #@
 import data
 
 
@@ -99,10 +99,10 @@ raise_string(*args, **kwargs)
 print('bonjour', file=stream)
 print('salut', end=' ', file=stream)
 
-def make_class(any, base=data.module.YO, *args, **kwargs):
+def make_class(any, base=data.module.YO, *args, **kwargs): #@
     """check base is correctly resolved to Concrete0"""
-    
-    
+
+
     class Aaaa(base):
         """dynamic class"""
         
@@ -121,18 +121,18 @@ class A(A):
     pass
 
 
-def generator():
+def generator(): #@
     """A generator."""
     yield
 
-def not_a_generator():
+def not_a_generator(): #@
     """A function that contains generator, but is not one."""
     
     def generator():
         yield
     genl = lambda : (yield)
 
-def with_metaclass(meta, *bases):
+def with_metaclass(meta, *bases): #@
     return meta('NewBase', bases, {})
 
 

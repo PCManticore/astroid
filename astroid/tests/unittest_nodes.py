@@ -279,15 +279,17 @@ class TryExcept2xNodeTest(_NodeTest):
 class ImportNodeTest(resources.SysPathSetup, unittest.TestCase):
     def setUp(self):
         super(ImportNodeTest, self).setUp()
-        self.module = resources.build_file('data/module.py', 'data.module')
-        self.module2 = resources.build_file('data/module2.py', 'data.module2')
+        self.module, self.nodes = resources.module()
+        self.module2, self.nodes2 = resources.module2()
+        # self.module = resources.build_file('data/module.py', 'data.module')
+        # self.module2 = resources.build_file('data/module2.py', 'data.module2')
 
     # TODO: do we want real_name?
     @unittest.skipUnless(2 == 3, "need to decide if we need real_name or not")
     def test_real_name(self):
-        from_ = self.module['NameNode']
+        from_ = self.nodes['NameNode']
         self.assertEqual(inferenceutil.real_name(from_, 'NameNode'), 'Name')
-        imp_ = self.module['os']
+        imp_ = self.nodes['os.path']
         self.assertEqual(inferenceutil.real_name(imp_, 'os'), 'os')
         self.assertRaises(exceptions.AttributeInferenceError,
                           inferenceutil.real_name, imp_, 'os.path')
@@ -295,17 +297,17 @@ class ImportNodeTest(resources.SysPathSetup, unittest.TestCase):
         self.assertEqual(inferenceutil.real_name(imp_, 'NameNode'), 'Name')
         self.assertRaises(exceptions.AttributeInferenceError,
                           inferenceutil.real_name, imp_, 'Name')
-        imp_ = self.module2['YO']
+        imp_ = self.nodes2['YO']
         self.assertEqual(inferenceutil.real_name(imp_, 'YO'), 'YO')
         self.assertRaises(exceptions.AttributeInferenceError,
                           inferenceutil.real_name, imp_, 'data')
 
     def test_as_string(self):
-        ast = self.module['modutils']
+        ast = self.nodes['modutils']
         self.assertEqual(ast.as_string(), "from astroid import modutils")
-        ast = self.module['NameNode']
+        ast = self.nodes['NameNode']
         self.assertEqual(ast.as_string(), "from astroid.tree.node_classes import Name as NameNode")
-        ast = self.module['os']
+        ast = self.nodes['os.path']
         self.assertEqual(ast.as_string(), "import os.path")
         code = """from . import here
 from .. import door
@@ -630,8 +632,10 @@ class DictTest(unittest.TestCase):
 class ModuleLoader(resources.SysPathSetup):
     def setUp(self):
         super(ModuleLoader, self).setUp()
-        self.module = resources.build_file('data/module.py', 'data.module')
-        self.module2 = resources.build_file('data/module2.py', 'data.module2')
+        self.module, self.nodes = resources.module()
+        self.module2, self.nodes2 = resources.module2()
+        # self.module = resources.build_file('data/module.py', 'data.module')
+        # self.module2 = resources.build_file('data/module2.py', 'data.module2')
         self.nonregr = resources.build_file('data/nonregr.py', 'data.nonregr')
         self.pack = resources.build_file('data/__init__.py', 'data')
 
@@ -701,28 +705,24 @@ class ModuleNodeTest(ModuleLoader, unittest.TestCase):
 class FunctionNodeTest(ModuleLoader, unittest.TestCase):
 
     def test_default_value(self):
-        make_class = self.module2.down().down()
-        for i in range(41):
-            make_class = make_class.right()
+        make_class = self.nodes2['make_class']
         self.assertIsInstance(make_class.args.default_value('base'), nodes.Attribute)
-        self.assertRaises(NoDefault, make_class.args.default_value, 'args')
-        self.assertRaises(NoDefault, make_class.args.default_value, 'kwargs')
-        self.assertRaises(NoDefault, make_class.args.default_value, 'any')
+        self.assertRaises(exceptions.NoDefault, make_class.args.default_value, 'args')
+        self.assertRaises(exceptions.NoDefault, make_class.args.default_value, 'kwargs')
+        self.assertRaises(exceptions.NoDefault, make_class.args.default_value, 'any')
 
     def test_navigation(self):
-        global_access = self.module.down().down().right().right().right().right().right().right()
+        global_access = self.nodes['global_access']
         self.assertEqual(global_access.statement(), global_access)
         l_sibling = global_access.previous_sibling()
         # check taking parent if child is not a stmt
         self.assertIsInstance(l_sibling, nodes.Assign)
         child = global_access.args.args[0]
-        self.assertIs(l_sibling, child.previous_sibling())
+        self.assertEqual(l_sibling, child.previous_sibling())
         r_sibling = global_access.next_sibling()
         self.assertIsInstance(r_sibling, nodes.ClassDef)
         self.assertEqual(r_sibling.name, 'YO')
-        # TODO: fix this once node equality is implemented
-
-        # self.assertIs(r_sibling, child.next_sibling())
+        self.assertEqual(r_sibling, child.next_sibling())
         last = r_sibling.next_sibling().next_sibling().next_sibling()
         self.assertIsInstance(last, nodes.Assign)
         self.assertIsNone(last.next_sibling())
@@ -741,27 +741,23 @@ class FunctionNodeTest(ModuleLoader, unittest.TestCase):
         self.assertEqual(func.args.format_args(), 'a, b, c, d')
 
     def test_four_args(self):
-        four_args = self.module.down().down().rightmost().left()
+        four_args = self.nodes['four_args']
         self.assertEqual(four_args.args.args, ['a', ('b', 'c', 'd')])
         self.assertEqual(four_args.type, 'function')
 
     def test_format_args(self):
-        make_class = self.module2.down().down()
-        for i in range(41):
-            make_class = make_class.right()
+        make_class = self.nodes2['make_class']
         self.assertEqual(make_class.args.format_args(),
                          'any, base=data.module.YO, *args, **kwargs')
-        four_args = self.module.down().down().rightmost().left()
+        four_args = self.nodes['four_args']
         self.assertEqual(four_args.args.format_args(), 'a, b, c, d')
 
     def test_is_generator(self):
-        not_a_generator = self.module2.down().down().rightmost().left().left()
+        not_a_generator = self.nodes2['not_a_generator']
         self.assertFalse(not_a_generator.is_generator())
-        generator = not_a_generator.left()
+        generator = self.nodes2['generator']
         self.assertTrue(generator.is_generator())
-        make_class = self.module2.down().down()
-        for i in range(41):
-            make_class = make_class.right()
+        make_class = self.nodes2['make_class']
         self.assertFalse(make_class.is_generator())
 
         # TODO: enable?
@@ -795,30 +791,28 @@ class FunctionNodeTest(ModuleLoader, unittest.TestCase):
 class ClassNodeTest(ModuleLoader, unittest.TestCase):
 
     def test_navigation(self):
-        klass = self.module.down().down().right().right().right().right().right().right().right()
-        self.assertEqual(klass.statement(), klass)
-        l_sibling = klass.previous_sibling()
+        yo = self.nodes['YO']
+        self.assertEqual(yo.statement(), yo)
+        l_sibling = yo.previous_sibling()
         self.assertTrue(isinstance(l_sibling, nodes.FunctionDef), l_sibling)
         self.assertEqual(l_sibling.name, 'global_access')
-        r_sibling = klass.next_sibling()
+        r_sibling = yo.next_sibling()
         self.assertIsInstance(r_sibling, nodes.ClassDef)
         self.assertEqual(r_sibling.name, 'YOUPI')
 
     def test_function_with_decorator_lineno(self):
         data = '''
-            @f(a=2,
+            @f(a=2, 
                b=3)
-            def g1(x):
+            def g1(x): #@
                 print(x)
 
-            @f(a=2,
+            @f(a=2, 
                b=3)
-            def g2():
+            def g2(): #@
                 pass
         '''
-        astroid = builder.parse(data)
-        g1 = astroid.down().down()
-        g2 = astroid.down().down().right()
+        g1, g2 = test_utils.extract_node(data)
         self.assertEqual(g1.fromlineno, 4)
         self.assertEqual(g1.tolineno, 5)
         self.assertEqual(g2.fromlineno, 9)

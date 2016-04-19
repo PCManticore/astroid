@@ -27,7 +27,7 @@ import six
 
 from astroid import builder
 from astroid import MANAGER
-
+from astroid import test_utils
 
 DATA_DIR = 'testdata'
 BUILTINS = six.moves.builtins.__name__
@@ -59,6 +59,33 @@ def find(name):
 def build_file(path, modname=None):
     return builder.AstroidBuilder().file_build(find(path), modname)
 
+
+def module():
+    # TODO: there needs to be consistency in the AST produced by
+    # different calls.  I've hacked this for now to make the calls the
+    # same.
+    module = builder.parse(
+        # open('astroid/tests/testdata/data/module.py', 'r').read(), 'data.module')
+        open(find('data/module.py'), 'r').read(), 'data.module')
+    # module = resources.build_file('data/module.py', 'data.module')
+    nodes = test_utils.extract_node(
+        # open('astroid/tests/testdata/data/module.py', 'r').read(), 'data.module')
+        open(find('data/module.py'), 'r').read(), 'data.module')
+    names = ['NameNode', 'modutils', 'os.path', 'global_access',
+             'YO', 'YOUPI', 'method', 'static_method',
+             'class_method', 'four_args']
+    return module, dict(zip(names, nodes))
+
+def module2():
+    module = builder.parse(
+        open(find('data/module2.py'), 'r').read(), 'data.module2')
+        # open('astroid/tests/testdata/data/module2.py', 'r').read(), 'data.module2')
+    nodes = test_utils.extract_node(
+        # open('astroid/tests/testdata/data/module2.py', 'r').read(), 'data.module2')
+        open(find('data/module2.py'), 'r').read(), 'data.module2')
+    names = ['YO', 'make_class', 'generator', 'not_a_generator',
+             'with_metaclass']
+    return module, dict(zip(names, nodes))
 
 class SysPathSetup(object):
     def setUp(self):
