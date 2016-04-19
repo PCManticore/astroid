@@ -37,7 +37,7 @@ from astroid.tests import resources
 BUILTINS = six.moves.builtins.__name__
 
 
-class AsStringTest(resources.SysPathSetup, unittest.TestCase):
+class AsStringTest(unittest.TestCase):
 
     def test_modules_as_string(self):
         for name in (os.path.join(p, n) for p, _, ns in os.walk('astroid/') for n in ns if n.endswith('.py')):
@@ -275,7 +275,7 @@ class TryExcept2xNodeTest(_NodeTest):
         self.assertIsInstance(handler.name, nodes.Tuple)
 
 
-class ImportNodeTest(resources.SysPathSetup, unittest.TestCase):
+class ImportNodeTest(unittest.TestCase):
     def setUp(self):
         super(ImportNodeTest, self).setUp()
         self.module, self.nodes = resources.module()
@@ -624,14 +624,11 @@ class DictTest(unittest.TestCase):
 # TODO: Scoped nodes
 
 
-class ModuleLoader(resources.SysPathSetup):
+class ModuleNodeTest(unittest.TestCase):
+
     def setUp(self):
-        super(ModuleLoader, self).setUp()
         self.module, self.nodes = resources.module()
         self.module2, self.nodes2 = resources.module2()
-
-
-class ModuleNodeTest(ModuleLoader, unittest.TestCase):
 
     def test_relative_to_absolute_name(self):
         # package
@@ -677,23 +674,29 @@ class ModuleNodeTest(ModuleLoader, unittest.TestCase):
                 self.assertEqual(stream.read().decode(), data)
 
     def test_file_stream_physical(self):
-        path = resources.find('data/absimport.py')
-        astroid = builder.AstroidBuilder().file_build(path, 'all')
-        with open(path, 'rb') as file_io:
+        with open(__file__) as stream:
+            astroid = builder.parse(stream.read())
+        with open(__file__, 'rb') as file_io:
             with astroid.stream() as stream:
-                self.assertEqual(stream.read(), file_io.read())
+                self.assertEqual([line.strip() for line in stream.read().splitlines()],
+                                 [line.strip() for line in file_io.read().splitlines()])
 
     def test_stream_api(self):
-        path = resources.find('data/absimport.py')
-        astroid = builder.AstroidBuilder().file_build(path, 'all')
+        with open(__file__) as stream:
+            astroid = builder.parse(stream.read())
         stream = astroid.stream()
         self.assertTrue(hasattr(stream, 'close'))
         with stream:
-            with open(path, 'rb') as file_io:
-                self.assertEqual(stream.read(), file_io.read())
+            with open(__file__, 'rb') as file_io:
+                self.assertEqual([line.strip() for line in stream.read().splitlines()],
+                                 [line.strip() for line in file_io.read().splitlines()])
 
 
-class FunctionNodeTest(ModuleLoader, unittest.TestCase):
+class FunctionNodeTest(unittest.TestCase):
+
+    def setUp(self):
+        self.module, self.nodes = resources.module()
+        self.module2, self.nodes2 = resources.module2()
 
     def test_default_value(self):
         make_class = self.nodes2['make_class']
@@ -775,7 +778,11 @@ class FunctionNodeTest(ModuleLoader, unittest.TestCase):
 
 
 
-class ClassNodeTest(ModuleLoader, unittest.TestCase):
+class ClassNodeTest(unittest.TestCase):
+
+    def setUp(self):
+        self.module, self.nodes = resources.module()
+        self.module2, self.nodes2 = resources.module2()
 
     def test_navigation(self):
         yo = self.nodes['YO']

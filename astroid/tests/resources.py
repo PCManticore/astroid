@@ -15,12 +15,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along
 # with astroid. If not, see <http://www.gnu.org/licenses/>.
-import binascii
-import contextlib
 import os
-import sys
-import shutil
-import tempfile
 
 import pkg_resources
 import six
@@ -30,23 +25,6 @@ from astroid import test_utils
 
 DATA_DIR = 'testdata'
 BUILTINS = six.moves.builtins.__name__
-
-
-@contextlib.contextmanager
-def _temporary_file():
-    name = binascii.hexlify(os.urandom(5)).decode()
-    path = find(name)
-    try:
-        yield path
-    finally:
-        os.remove(path)
-
-@contextlib.contextmanager
-def tempfile_with_content(content):
-    with _temporary_file() as tmp:
-        with open(tmp, 'wb') as stream:
-            stream.write(content)
-        yield tmp
 
 
 def find(name):
@@ -81,14 +59,3 @@ def module2():
     names = ['YO', 'make_class', 'generator', 'not_a_generator',
              'with_metaclass']
     return module, dict(zip(names, nodes))
-
-class SysPathSetup(object):
-    def setUp(self):
-        sys.path.insert(0, find(''))
-
-    def tearDown(self):
-        del sys.path[0]
-        datadir = find('')
-        for key in list(sys.path_importer_cache):
-            if key.startswith(datadir):
-                del sys.path_importer_cache[key]

@@ -361,7 +361,6 @@ class FileBuildTest(unittest.TestCase):
         self.assertEqual(module.root(), module)
         # TODO: restore this when paths are made consistent.
 
-        # self.assertEqual(module.source_file, os.path.abspath(resources.find('data/module.py')))
         self.assertEqual(module.pure_python, 1)
         self.assertEqual(module.package, 0)
         self.assertFalse(module.is_statement)
