@@ -143,7 +143,8 @@ class Zipper(wrapt.ObjectProxy):
     def left(self):
         '''Go to the next sibling that's directly to the left of the focus.
 
-        This takes constant time.'''
+        This takes constant time.
+        '''
         if self._self_path and self._self_path.left:
             focus, left = self._self_path.left
             path = self._self_path._replace(left=left,
@@ -154,7 +155,8 @@ class Zipper(wrapt.ObjectProxy):
     def leftmost(self):
         '''Go to the leftmost sibling of the focus.
 
-        This takes time linear in the number of left siblings.'''
+        This takes time linear in the number of left siblings.
+        '''
         if self._self_path and self._self_path.left:
             focus, siblings = _last(self._self_path.left), _initial(self._self_path.left)
             right = _concatenate(_reverse(siblings), (self.__wrapped__, self._self_path.right))
