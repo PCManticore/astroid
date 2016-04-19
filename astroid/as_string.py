@@ -105,21 +105,13 @@ class AsStringVisitor(object):
         """return an astroid.ClassDef node as string"""
         decorate = node.decorators and node.decorators.accept(self)  or ''
         bases = ', '.join([n.accept(self) for n in node.bases])
-        if sys.version_info[0] == 2:
-            bases = bases and '(%s)' % bases or ''
+        keywords = ', '.join(keyword.accept(self) for keyword in node.keywords)
+        if not bases and not keywords:
+            signature = '()'
         else:
-            metaclass = node.metaclass
-            if metaclass:
-                # TODO: this might crash.
-                metaclass = metaclass.accept(self)
-                if bases:
-                    bases = '(%s, metaclass=%s)' % (bases, metaclass)
-                else:
-                    bases = '(metaclass=%s)' % metaclass
-            else:
-                bases = bases and '(%s)' % bases or ''
+            signature = '(%s)' % ', '.join(filter(None, (bases, keywords)))
         docs = node.doc and '\n%s"""%s"""' % (self.indent, node.doc) or ''
-        return '\n\n%sclass %s%s:%s\n%s\n' % (decorate, node.name, bases, docs,
+        return '\n\n%sclass %s%s:%s\n%s\n' % (decorate, node.name, signature, docs,
                                               self._stmt_list(node.body))
 
     def visit_compare(self, node):

@@ -814,10 +814,11 @@ class ClassNodeTest(unittest.TestCase):
 
     @unittest.skipIf(six.PY2, "Needs Python 3+")
     def test_keywords(self):
-        ast_node = test_utils.extract_node('''
+        code = textwrap.dedent('''
         class A(metaclass=Test, something_else=Keyword):
             pass
         ''')
+        ast_node = test_utils.extract_node(code)
         self.assertEqual(len(ast_node.keywords), 2)
         for (keyword, value), node in zip([('metaclass', 'Test'),
                                            ('something_else', 'Keyword')], ast_node.keywords):
@@ -825,6 +826,7 @@ class ClassNodeTest(unittest.TestCase):
             self.assertEqual(node.arg, keyword)
             self.assertIsInstance(node.value, astroid.Name)
             self.assertEqual(node.value.name, value)
+        self.assertEqual(code.strip(), ast_node.as_string().strip())
 
 
 if __name__ == '__main__':
