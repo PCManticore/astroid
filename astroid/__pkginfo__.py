@@ -26,7 +26,7 @@ numversion = (2, 0, 0)
 version = '.'.join([str(num) for num in numversion])
 
 
-install_requires = ['lazy_object_proxy', 'six', 'wrapt']
+install_requires = ['six', 'wrapt']
 
 if sys.version_info <= (3, 3):
     install_requires.append('singledispatch')

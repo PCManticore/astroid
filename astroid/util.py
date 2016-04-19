@@ -24,7 +24,6 @@ import platform
 import sys
 import warnings
 
-import lazy_object_proxy
 import six
 import wrapt
 
@@ -34,11 +33,6 @@ try:
     from functools import singledispatch
 except ImportError:
     from singledispatch import singledispatch
-
-
-def lazy_import(module_name):
-    return lazy_object_proxy.Proxy(
-        lambda: importlib.import_module('.' + module_name, 'astroid'))
 
 
 def reraise(exception):

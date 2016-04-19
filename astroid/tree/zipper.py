@@ -11,10 +11,6 @@ https://github.com/clojure/clojure/blob/master/src/clj/clojure/zip.clj .
 '''
 import collections
 
-# Because every zipper method creates a new zipper, zipper creation
-# has to be optimized as much as possible.  Using wrapt here instead
-# of lazy_object_proxy avoids several additional function calls every
-# time an AST node method has to be accessed through a new zipper.
 import wrapt
 
 from astroid import scope
