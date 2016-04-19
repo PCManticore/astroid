@@ -77,8 +77,22 @@ class AstroidSyntaxError(AstroidBuildingError):
     """Exception class used when a module can't be parsed."""
 
 
+class NoDefault(AstroidError):
+    """raised by function's `default_value` method when an argument has
+    no default value
+
+    Standard attributes:
+        func: Function node.
+        name: Name of argument without a default.
+    """
+    func = None
+    name = None
+
+    def __init__(self, message='{func!r} has no default for {name!r}.', **kws):
+        super(NoDefault, self).__init__(message, **kws)
+
+
 class NotSupportedError(AstroidError):
     """Exception raised whenever a capability is accessed on a node
     which doesn't provide it.
     """
-
