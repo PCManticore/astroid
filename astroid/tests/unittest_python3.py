@@ -185,7 +185,7 @@ class Python3TC(unittest.TestCase):
         def test(a: int, b: str, c: None, d, e,
                  *args: float, **kwargs: int)->int: #@
             pass
-        """))
+        """)
         self.assertIsInstance(func.args.vararg.annotation, Name)
         self.assertEqual(func.args.vararg.annotation.name, 'float')
         self.assertIsInstance(func.args.kwarg.annotation, Name)
@@ -205,7 +205,7 @@ class Python3TC(unittest.TestCase):
         func = test_utils.extract_node("""
         def test(a: int=1, b: str=2): #@
             pass
-        """))
+        """)
         self.assertIsInstance(func.args.args[0].annotation, Name)
         self.assertEqual(func.args.args[0].annotation.name, 'int')
         self.assertIsInstance(func.args.args[1].annotation, Name)
