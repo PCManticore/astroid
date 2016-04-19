@@ -857,10 +857,6 @@ class TreeRebuilder3(TreeRebuilder):
             newnode.postinit(self.visit(node.value, newnode))
         return newnode
 
-    # def visit_classdef(self, node, parent, newstyle=True):
-    #     return super(TreeRebuilder3, self).visit_classdef(node, parent,
-    #                                                       newstyle=newstyle)
-
     # Async structs added in Python 3.5
     def visit_asyncfunctiondef(self, node, parent):
         return self._visit_functiondef(nodes.AsyncFunctionDef, node, parent)
