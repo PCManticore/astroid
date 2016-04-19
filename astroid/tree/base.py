@@ -62,21 +62,21 @@ class NodeNG(object):
         for field in self._astroid_fields:
             yield getattr(self, field)
 
-    # def __eq__(self, other):
-    #     if self.__class__ is other.__class__:
-    #         return (all(getattr(self, f) == getattr(other, f)
-    #                    for f in self._astroid_fields) and
-    #                 all(getattr(self, f) == getattr(other, f)
-    #                     for f in self._other_fields))
-    #     else:
-    #         return False
+    def __eq__(self, other):
+        if self.__class__ is other.__class__:
+            return (all(getattr(self, f) == getattr(other, f)
+                       for f in self._astroid_fields) and
+                    all(getattr(self, f) == getattr(other, f)
+                        for f in self._other_fields))
+        else:
+            return False
 
-    # def __ne__(self, other):
-    #     return not self == other
+    def __ne__(self, other):
+        return not self == other
 
-    # # Must be defined to retain object.__hash__, see
-    # # https://docs.python.org/3/reference/datamodel.html#object.__hash__
-    # __hash__ = object.__hash__
+    # Must be defined to retain object.__hash__, see
+    # https://docs.python.org/3/reference/datamodel.html#object.__hash__
+    __hash__ = object.__hash__
 
     def _repr_name(self):
         """return self.name or self.attrname or '' for nice representation"""

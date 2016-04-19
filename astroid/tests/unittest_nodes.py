@@ -43,6 +43,17 @@ BUILTINS = six.moves.builtins.__name__
 
 class AsStringTest(resources.SysPathSetup, unittest.TestCase):
 
+    def test_modules_as_string(self):
+        for name in (os.path.join(p, n) for p, _, ns in os.walk('astroid/') for n in ns if n.endswith('.py')):
+            with open(name, 'r') as source_file:
+                ast = parse(source_file.read())
+                # if ast != parse(ast.as_string()):
+                #     print(name)
+                #     print(ast == ast)
+                #     ast.print_tree()
+                #     parse(ast.as_string()).print_tree()
+                self.assertEqual(ast, parse(ast.as_string()))
+
     def test_tuple_as_string(self):
         def build(string):
             return abuilder.string_build(string).body[0].value
@@ -64,21 +75,6 @@ class AsStringTest(resources.SysPathSetup, unittest.TestCase):
     def test_varargs_kwargs_as_string(self):
         ast = abuilder.string_build('raise_string(*args, **kwargs)').body[0]
         self.assertEqual(ast.as_string(), 'raise_string(*args, **kwargs)')
-
-    def test_module_as_string(self):
-        """check as_string on a whole module prepared to be returned identically
-        """
-        module = resources.build_file('data/module.py', 'data.module')
-        with open(resources.find('data/module.py'), 'r') as fobj:
-            self.assertMultiLineEqual(module.as_string(), fobj.read())
-
-    maxDiff = None
-    def test_module2_as_string(self):
-        """check as_string on a whole module prepared to be returned identically
-        """
-        module2 = resources.build_file('data/module2.py', 'data.module2')
-        with open(resources.find('data/module2.py'), 'r') as fobj:
-            self.assertMultiLineEqual(module2.as_string(), fobj.read())
 
     def test_as_string(self):
         """check as_string for python syntax >= 2.7"""
@@ -644,43 +640,6 @@ class ModuleLoader(resources.SysPathSetup):
 
 
 class ModuleNodeTest(ModuleLoader, unittest.TestCase):
-
-    def test_public_names(self):
-        m = builder.parse('''
-        name = 'a'
-        _bla = 2
-        other = 'o'
-        class Aaa: pass
-        def func(): print('yo')
-        __all__ = 'Aaa', '_bla', 'name'
-        ''')
-        values = sorted(['Aaa', 'name', 'other', 'func'])
-        self.assertEqual(sorted(m.public_names()), values)
-        m = builder.parse('''
-        name = 'a'
-        _bla = 2
-        other = 'o'
-        class Aaa: pass
-
-        def func(): return 'yo'
-        ''')
-        res = sorted(m.public_names())
-        self.assertEqual(res, values)
-
-        m = builder.parse('''
-            from missing import tzop
-            trop = "test"
-            __all__ = (trop, "test1", tzop, 42)
-        ''')
-        res = sorted(m.public_names())
-        self.assertEqual(res, ["trop", "tzop"])
-
-        m = builder.parse('''
-            test = tzop = 42
-            __all__ = ('test', ) + ('tzop', )
-        ''')
-        res = sorted(m.public_names())
-        self.assertEqual(res, ['test', 'tzop'])
 
     def test_relative_to_absolute_name(self):
         # package
