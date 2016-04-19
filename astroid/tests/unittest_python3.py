@@ -77,32 +77,6 @@ class Python3TC(unittest.TestCase):
     # metaclass tests
 
     @test_utils.require_version('3.0')
-    def test_simple_metaclass(self):
-        astroid = builder.parse("class Test(metaclass=type): pass")
-        klass = astroid.body[0]
-
-        metaclass = klass.metaclass()
-        self.assertIsInstance(metaclass, ClassDef)
-        self.assertEqual(metaclass.name, 'type')
-
-    @test_utils.require_version('3.0')
-    def test_metaclass_error(self):
-        astroid = builder.parse("class Test(metaclass=typ): pass")
-        klass = astroid.body[0]
-        self.assertFalse(klass.metaclass())
-
-    @test_utils.require_version('3.0')
-    def test_metaclass_imported(self):
-        astroid = builder.parse(dedent("""
-        from abc import ABCMeta 
-        class Test(metaclass=ABCMeta): pass"""))
-        klass = astroid.body[1]
-
-        metaclass = klass.metaclass()
-        self.assertIsInstance(metaclass, ClassDef)
-        self.assertEqual(metaclass.name, 'ABCMeta')
-
-    @test_utils.require_version('3.0')
     def test_as_string(self):
         body = dedent("""
         from abc import ABCMeta 
@@ -114,73 +88,19 @@ class Python3TC(unittest.TestCase):
                          '\n\nclass Test(metaclass=ABCMeta):\n    pass\n')
 
     @test_utils.require_version('3.0')
-    def test_old_syntax_works(self):
-        astroid = builder.parse(dedent("""
-        class Test:
-            __metaclass__ = type
-        class SubTest(Test): pass
-        """))
-        klass = astroid['SubTest']
-        metaclass = klass.metaclass()
-        self.assertIsNone(metaclass)
-
-    @test_utils.require_version('3.0')
-    def test_metaclass_yes_leak(self):
-        astroid = builder.parse(dedent("""
-        # notice `ab` instead of `abc`
-        from ab import ABCMeta
-
-        class Meta(metaclass=ABCMeta): pass
-        """))
-        klass = astroid['Meta']
-        self.assertIsNone(klass.metaclass())
-
-    @test_utils.require_version('3.0')
-    def test_parent_metaclass(self):
-        astroid = builder.parse(dedent("""
+    def test_metaclass_is_defined(self):
+        klass = test_utils.extract_node("""
         from abc import ABCMeta
         class Test(metaclass=ABCMeta): pass
-        class SubTest(Test): pass
-        """))
-        klass = astroid['SubTest']
-        self.assertTrue(klass.newstyle)
-        metaclass = klass.metaclass()
-        self.assertIsInstance(metaclass, ClassDef)
+        """)
+        metaclass = klass.metaclass
         self.assertEqual(metaclass.name, 'ABCMeta')
-
-    @test_utils.require_version('3.0')
-    def test_metaclass_ancestors(self):
-        astroid = builder.parse(dedent("""
-        from abc import ABCMeta
-
-        class FirstMeta(metaclass=ABCMeta): pass
-        class SecondMeta(metaclass=type):
-            pass
-
-        class Simple:
-            pass
-
-        class FirstImpl(FirstMeta): pass
-        class SecondImpl(FirstImpl): pass
-        class ThirdImpl(Simple, SecondMeta):
-            pass
-        """))
-        classes = {
-            'ABCMeta': ('FirstImpl', 'SecondImpl'),
-            'type': ('ThirdImpl', )
-        }
-        for metaclass, names in classes.items():
-            for name in names:
-                impl = astroid[name]
-                meta = impl.metaclass()
-                self.assertIsInstance(meta, ClassDef)
-                self.assertEqual(meta.name, metaclass)
 
     @test_utils.require_version('3.0')
     def test_annotation_support(self):
         func = test_utils.extract_node("""
         def test(a: int, b: str, c: None, d, e,
-                 *args: float, **kwargs: int)->int: #@
+                 *args: float, **kwargs: int)->int:
             pass
         """)
         self.assertIsInstance(func.args.vararg.annotation, Name)
@@ -235,25 +155,6 @@ class Python3TC(unittest.TestCase):
         code = "{'x': 1, **{'y': 2, **{'z': 3}}}"
         node = test_utils.extract_node(code)
         self.assertEqual(node.as_string(), code)
-
-    @test_utils.require_version('3.5')
-    def test_unpacking_in_dict_getitem(self):
-        node = test_utils.extract_node('{1:2, **{2:3, 3:4}, **{5: 6}}')
-        for key, expected in ((1, 2), (2, 3), (3, 4), (5, 6)):
-            value = node.getitem(key)
-            self.assertIsInstance(value, nodes.Const)
-            self.assertEqual(value.value, expected)
-
-    # TODO: figure out what to do with this test.  Arguments should
-    # probably provide support for positional-only parameters, but how
-    # do we test it without raw_building?
-
-    # @test_utils.require_version(minver='3.5')
-    # def test_positional_only_parameters(self):
-    #     ast = raw_building.ast_from_object(issubclass)
-    #     self.assertEqual(len(ast.args.positional_only), 2)
-    #     for name, arg in zip(('cls', 'class_or_tuple'), ast.args.positional_only):
-    #         self.assertEqual(arg.name, name)
 
 
 if __name__ == '__main__':

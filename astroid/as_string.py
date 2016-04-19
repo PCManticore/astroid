@@ -108,12 +108,14 @@ class AsStringVisitor(object):
         if sys.version_info[0] == 2:
             bases = bases and '(%s)' % bases or ''
         else:
-            metaclass = node.metaclass()
-            if metaclass and not node.has_metaclass_hack():
+            metaclass = node.metaclass
+            if metaclass:
+                # TODO: this might crash.
+                metaclass = metaclass.accept(self)
                 if bases:
-                    bases = '(%s, metaclass=%s)' % (bases, metaclass.name)
+                    bases = '(%s, metaclass=%s)' % (bases, metaclass)
                 else:
-                    bases = '(metaclass=%s)' % metaclass.name
+                    bases = '(metaclass=%s)' % metaclass
             else:
                 bases = bases and '(%s)' % bases or ''
         docs = node.doc and '\n%s"""%s"""' % (self.indent, node.doc) or ''
