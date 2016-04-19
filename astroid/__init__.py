@@ -59,11 +59,6 @@ del _Context
 
 # pylint: disable=redefined-builtin, wildcard-import
 
-# make a manager instance (borg) accessible from astroid package
-from astroid.manager import AstroidManager
-MANAGER = AstroidManager()
-del AstroidManager
-
 # make all exception classes accessible from astroid package
 from astroid.exceptions import *
 
@@ -75,55 +70,3 @@ from astroid.builder import parse
 # TODO
 # from astroid.tree import zipper
 from astroid.tree.base import NodeNG
-
-
-# transform utilities (filters and decorator)
-
-class AsStringRegexpPredicate(object):
-    """ClassDef to be used as predicate that may be given to `register_transform`
-
-    First argument is a regular expression that will be searched against the `as_string`
-    representation of the node onto which it's applied.
-
-    If specified, the second argument is an `attrgetter` expression that will be
-    applied on the node first to get the actual node on which `as_string` should
-    be called.
-
-    WARNING: This can be fairly slow, as it has to convert every AST node back
-    to Python code; you should consider examining the AST directly instead.
-    """
-    def __init__(self, regexp, expression=None):
-        self.regexp = re.compile(regexp)
-        self.expression = expression
-
-    def __call__(self, node):
-        if self.expression is not None:
-            node = attrgetter(self.expression)(node)
-        return self.regexp.search(node.as_string())
-
-def inference_tip(infer_function):
-    """Given an instance specific inference function, return a function to be
-    given to MANAGER.register_transform to set this inference function.
-
-    Typical usage
-
-    .. sourcecode:: python
-
-       MANAGER.register_transform(Call, inference_tip(infer_named_tuple),
-                                  predicate)
-    """
-    def transform(node, infer_function=infer_function):
-        node._explicit_inference = infer_function
-        return node
-    return transform
-
-
-def register_module_extender(manager, module_name, get_extension_mod):
-    def transform(module):
-        extension_module = get_extension_mod()
-        if extension_module:
-            for statement in extension_module.body:
-                statement.parent = module
-                module.body.append(statement)
-
-    manager.register_transform(Module, transform, lambda n: n.name == module_name)

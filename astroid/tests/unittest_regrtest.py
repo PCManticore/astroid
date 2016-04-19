@@ -20,9 +20,7 @@ import unittest
 
 import six
 
-from astroid import MANAGER
-from astroid.builder import AstroidBuilder
-from astroid.manager import AstroidManager
+from astroid import builder
 from astroid.test_utils import require_version, extract_node
 from astroid.tests import resources
 from astroid import transforms
@@ -31,67 +29,30 @@ from astroid import transforms
 BUILTINS = six.moves.builtins.__name__
 
 
-class NonRegressionTests(resources.AstroidCacheSetupMixin,
-                         unittest.TestCase):
-
-    def setUp(self):
-        sys.path.insert(0, resources.find('data'))
-        MANAGER.always_load_extensions = True
-        MANAGER.astroid_cache[BUILTINS] = self._builtins
-
-    def tearDown(self):
-        # Since we may have created a brainless manager, leading
-        # to a new cache builtin module and proxy classes in the constants,
-        # clear out the global manager cache.
-        MANAGER.clear_cache()
-        MANAGER.always_load_extensions = False
-        sys.path.pop(0)
-        sys.path_importer_cache.pop(resources.find('data'), None)
-
-    def brainless_manager(self):
-        manager = AstroidManager()
-        # avoid caching into the AstroidManager borg since we get problems
-        # with other tests :
-        manager.__dict__ = {}
-        manager._failed_import_hooks = []
-        manager.astroid_cache = {}
-        manager._mod_file_cache = {}
-        manager._transform = transforms.TransformVisitor()
-        manager.clear_cache() # trigger proper bootstraping
-        return manager
+class NonRegressionTests(unittest.TestCase):
 
     @require_version('3.0')
     def test_nameconstant(self):
         # used to fail for Python 3.4
-        builder = AstroidBuilder()
-        astroid = builder.string_build("def test(x=True): pass")
+        astroid = builder.parse("def test(x=True): pass")
         default = astroid.body[0].args.args[0]
         self.assertEqual(default.name, 'x')
         self.assertEqual(next(default.infer()).value, True)
 
-    # TODO: inference used in test
+    def test_unicode_in_docstring(self):
+         # Crashed for astroid==1.4.1
+         # Test for https://bitbucket.org/logilab/astroid/issues/273/
 
-    # def test_unicode_in_docstring(self):
-    #     # Crashed for astroid==1.4.1
-    #     # Test for https://bitbucket.org/logilab/astroid/issues/273/
+         # In a regular file, "coding: utf-8" would have been used.
+         node = extract_node(u'''
+         from __future__ import unicode_literals
 
-    #     # In a regular file, "coding: utf-8" would have been used.
-    #     node = extract_node(u'''
-    #     from __future__ import unicode_literals
+         class MyClass(object):
+            def method(self):
+                 "With unicode : %s "
+         ''' % u"\u2019")
 
-    #     class MyClass(object):
-    #         def method(self):
-    #             "With unicode : %s "
-
-    #     instance = MyClass()
-    #     ''' % u"\u2019")
-
-    #     next(node.value.infer()).as_string()
-
-    def test_qname_not_on_generatorexp(self):
-        node = extract_node('''(i for i in range(10))''')
-        with self.assertRaises(AttributeError):
-            node.qname
+         node.as_string()
 
 
 if __name__ == '__main__':

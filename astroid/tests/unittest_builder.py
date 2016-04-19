@@ -25,12 +25,10 @@ import six
 
 from astroid import builder
 from astroid import exceptions
-from astroid import manager
 from astroid import nodes
 from astroid import test_utils
 from astroid.tests import resources
 
-MANAGER = manager.AstroidManager()
 BUILTINS = six.moves.builtins.__name__
 
 
@@ -268,7 +266,6 @@ class FromToLineNoTest(unittest.TestCase):
         self.assertEqual(try_.finalbody[0].fromlineno, 7) # XXX
         self.assertEqual(try_.finalbody[0].tolineno, 7)
 
-
     def test_with_lineno(self):
         astroid = builder.parse('''
             from __future__ import with_statement
@@ -283,29 +280,13 @@ class FromToLineNoTest(unittest.TestCase):
 
 class BuilderTest(unittest.TestCase):
 
-    def setUp(self):
-        self.builder = builder.AstroidBuilder()
-
     def test_data_build_null_bytes(self):
         with self.assertRaises(exceptions.AstroidSyntaxError):
-            self.builder.string_build('\x00')
+            builder.parse('\x00')
 
     def test_data_build_invalid_x_escape(self):
         with self.assertRaises(exceptions.AstroidSyntaxError):
-            self.builder.string_build('"\\x1"')
-
-    def test_missing_file(self):
-        with self.assertRaises(exceptions.AstroidBuildingError):
-            resources.build_file('data/inexistant.py')
-
-    def test_package_name(self):
-        """test base properties and method of a astroid module"""
-        datap = resources.build_file('data/__init__.py', 'data')
-        self.assertEqual(datap.name, 'data')
-        self.assertEqual(datap.package, 1)
-        datap = resources.build_file('data/__init__.py', 'data.__init__')
-        self.assertEqual(datap.name, 'data')
-        self.assertEqual(datap.package, 1)
+            builder.parse('"\\x1"')
 
     def test_yield_parent(self):
         """check if we added discard nodes as yield parent (w/ compiler)"""
@@ -424,75 +405,6 @@ class FileBuildTest(unittest.TestCase):
         self.assertEqual([n.name for n in method.args.args], ['cls'])
         method = self.nodes['static_method']
         self.assertEqual(method.args.args, [])
-
-    def test_unknown_encoding(self):
-        with self.assertRaises(exceptions.AstroidSyntaxError):
-            with resources.tempfile_with_content(b'# -*- coding: lala -*-') as tmp:
-                builder.AstroidBuilder().file_build(tmp)
-
-
-class ModuleBuildTest(resources.SysPathSetup, FileBuildTest):
-
-    def setUp(self):
-        super(ModuleBuildTest, self).setUp()
-        abuilder = builder.AstroidBuilder()
-        try:
-            import data.module
-        except ImportError:
-            # Make pylint happy.
-            self.skipTest('Unable to load data.module')
-        else:
-            self.module = abuilder.module_build(data.module, 'data.module')
-
-@unittest.skipIf(six.PY3, "guess_encoding not used on Python 3")
-class TestGuessEncoding(unittest.TestCase):
-    def setUp(self):
-        self.guess_encoding = builder._guess_encoding
-
-    def testEmacs(self):
-        e = self.guess_encoding('# -*- coding: UTF-8  -*-')
-        self.assertEqual(e, 'UTF-8')
-        e = self.guess_encoding('# -*- coding:UTF-8 -*-')
-        self.assertEqual(e, 'UTF-8')
-        e = self.guess_encoding('''
-        ### -*- coding: ISO-8859-1  -*-
-        ''')
-        self.assertEqual(e, 'ISO-8859-1')
-        e = self.guess_encoding('''
-
-        ### -*- coding: ISO-8859-1  -*-
-        ''')
-        self.assertIsNone(e)
-
-    def testVim(self):
-        e = self.guess_encoding('# vim:fileencoding=UTF-8')
-        self.assertEqual(e, 'UTF-8')
-        e = self.guess_encoding('''
-        ### vim:fileencoding=ISO-8859-1
-        ''')
-        self.assertEqual(e, 'ISO-8859-1')
-        e = self.guess_encoding('''
-
-        ### vim:fileencoding= ISO-8859-1
-        ''')
-        self.assertIsNone(e)
-
-    def test_wrong_coding(self):
-        # setting "coding" varaible
-        e = self.guess_encoding("coding = UTF-8")
-        self.assertIsNone(e)
-        # setting a dictionnary entry
-        e = self.guess_encoding("coding:UTF-8")
-        self.assertIsNone(e)
-        # setting an arguement
-        e = self.guess_encoding("def do_something(a_word_with_coding=None):")
-        self.assertIsNone(e)
-
-    def testUTF8(self):
-        e = self.guess_encoding('\xef\xbb\xbf any UTF-8 data')
-        self.assertEqual(e, 'UTF-8')
-        e = self.guess_encoding(' any UTF-8 data \xef\xbb\xbf')
-        self.assertIsNone(e)
 
 
 if __name__ == '__main__':

@@ -26,7 +26,6 @@ import pkg_resources
 import six
 
 from astroid import builder
-from astroid import MANAGER
 from astroid import test_utils
 
 DATA_DIR = 'testdata'
@@ -54,10 +53,6 @@ def find(name):
     return pkg_resources.resource_filename(
         'astroid.tests',
         os.path.normpath(os.path.join(DATA_DIR, name)))
-
-
-def build_file(path, modname=None):
-    return builder.AstroidBuilder().file_build(find(path), modname)
 
 
 def module():
@@ -97,27 +92,3 @@ class SysPathSetup(object):
         for key in list(sys.path_importer_cache):
             if key.startswith(datadir):
                 del sys.path_importer_cache[key]
-
-
-class AstroidCacheSetupMixin(object):
-    """Mixin for handling the astroid cache problems.
-
-    When clearing the astroid cache, some tests fails due to
-    cache inconsistencies, where some objects had a different
-    builtins object referenced.
-    This saves the builtins module and makes sure to add it
-    back to the astroid_cache after the tests finishes.
-    The builtins module is special, since some of the
-    transforms for a couple of its objects (str, bytes etc)
-    are executed only once, so astroid_bootstrapping will be
-    useless for retrieving the original builtins module.
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        cls._builtins = MANAGER.astroid_cache.get(BUILTINS)
-
-    @classmethod
-    def tearDownClass(cls):
-        if cls._builtins:
-            MANAGER.astroid_cache[BUILTINS] = cls._builtins

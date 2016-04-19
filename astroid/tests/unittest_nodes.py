@@ -34,7 +34,6 @@ from astroid import parse
 from astroid import test_utils
 from astroid.tests import resources
 
-abuilder = builder.AstroidBuilder()
 BUILTINS = six.moves.builtins.__name__
 
 
@@ -53,7 +52,7 @@ class AsStringTest(resources.SysPathSetup, unittest.TestCase):
 
     def test_tuple_as_string(self):
         def build(string):
-            return abuilder.string_build(string).body[0].value
+            return builder.parse(string).body[0].value
 
         self.assertEqual(build('1,').as_string(), '(1, )')
         self.assertEqual(build('1, 2, 3').as_string(), '(1, 2, 3)')
@@ -70,7 +69,7 @@ class AsStringTest(resources.SysPathSetup, unittest.TestCase):
         self.assertEqual(node.as_string().strip(), code.strip())
 
     def test_varargs_kwargs_as_string(self):
-        ast = abuilder.string_build('raise_string(*args, **kwargs)').body[0]
+        ast = builder.parse('raise_string(*args, **kwargs)').body[0]
         self.assertEqual(ast.as_string(), 'raise_string(*args, **kwargs)')
 
     def test_as_string(self):
@@ -78,7 +77,7 @@ class AsStringTest(resources.SysPathSetup, unittest.TestCase):
         code = '''one_two = {1, 2}
 b = {v: k for (k, v) in enumerate('string')}
 cdd = {k for k in b}\n\n'''
-        ast = abuilder.string_build(code)
+        ast = builder.parse(code)
         self.assertMultiLineEqual(ast.as_string(), code)
 
     @test_utils.require_version('3.0')
@@ -94,7 +93,7 @@ def function(var):
         (*hell, o) = b'hello'
         raise AttributeError from nexc
 \n'''
-        ast = abuilder.string_build(code)
+        ast = builder.parse(code)
         self.assertEqual(ast.as_string(), code)
 
     @test_utils.require_version('3.0')
@@ -108,17 +107,17 @@ def function(var):
             """natural language"""
         ''')
 
-        ast = abuilder.string_build(code_annotations)
+        ast = builder.parse(code_annotations)
         self.assertEqual(ast.as_string(), code_annotations)
 
     def test_ellipsis(self):
-        ast = abuilder.string_build('a[...]').body[0]
+        ast = builder.parse('a[...]').body[0]
         self.assertEqual(ast.as_string(), 'a[...]')
 
     def test_slices(self):
         for code in ('a[0]', 'a[1:3]', 'a[:-1:step]', 'a[:,newaxis]',
                      'a[newaxis,:]', 'del L[::2]', 'del A[1]', 'del Br[:]'):
-            ast = abuilder.string_build(code).body[0]
+            ast = builder.parse(code).body[0]
             self.assertEqual(ast.as_string(), code)
 
     def test_slice_and_subscripts(self):
@@ -137,7 +136,7 @@ aout.vals = miles.of_stuff
 del (ccok, (name.thing, foo.attrib.value)), Fee.form[left:]
 if all[1] == bord[0:]:
     pass\n\n"""
-        ast = abuilder.string_build(code)
+        ast = builder.parse(code)
         self.assertEqual(ast.as_string(), code)
 
 
@@ -281,8 +280,6 @@ class ImportNodeTest(resources.SysPathSetup, unittest.TestCase):
         super(ImportNodeTest, self).setUp()
         self.module, self.nodes = resources.module()
         self.module2, self.nodes2 = resources.module2()
-        # self.module = resources.build_file('data/module.py', 'data.module')
-        # self.module2 = resources.build_file('data/module2.py', 'data.module2')
 
     # TODO: do we want real_name?
     @unittest.skipUnless(2 == 3, "need to decide if we need real_name or not")
@@ -313,13 +310,13 @@ class ImportNodeTest(resources.SysPathSetup, unittest.TestCase):
 from .. import door
 from .store import bread
 from ..cave import wine\n\n"""
-        ast = abuilder.string_build(code)
+        ast = builder.parse(code)
         self.assertMultiLineEqual(ast.as_string(), code)
 
 
 class CmpNodeTest(unittest.TestCase):
     def test_as_string(self):
-        ast = abuilder.string_build("a == 2").body[0]
+        ast = builder.parse("a == 2").body[0]
         self.assertEqual(ast.as_string(), "a == 2")
 
 
@@ -632,10 +629,6 @@ class ModuleLoader(resources.SysPathSetup):
         super(ModuleLoader, self).setUp()
         self.module, self.nodes = resources.module()
         self.module2, self.nodes2 = resources.module2()
-        # self.module = resources.build_file('data/module.py', 'data.module')
-        # self.module2 = resources.build_file('data/module2.py', 'data.module2')
-        self.nonregr = resources.build_file('data/nonregr.py', 'data.nonregr')
-        self.pack = resources.build_file('data/__init__.py', 'data')
 
 
 class ModuleNodeTest(ModuleLoader, unittest.TestCase):

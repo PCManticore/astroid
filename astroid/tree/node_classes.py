@@ -26,7 +26,6 @@ import sys
 import six
 
 from astroid import exceptions
-from astroid import manager
 from astroid.tree import base
 from astroid import util
 

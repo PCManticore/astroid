@@ -18,21 +18,18 @@
 from textwrap import dedent
 import unittest
 
+from astroid import builder
 from astroid import nodes
 from astroid.tree.node_classes import (Assign, Expr, YieldFrom, Name,
                                        Const, ClassDef, FunctionDef)
-from astroid.builder import AstroidBuilder
 from astroid import test_utils
 
 
 class Python3TC(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.builder = AstroidBuilder()
 
     @test_utils.require_version('3.0')
     def test_starred_notation(self):
-        astroid = self.builder.string_build("*a, b = [1, 2, 3]", 'test', 'test')
+        astroid = builder.parse("*a, b = [1, 2, 3]", 'test', 'test')
 
         # Get the star node
         node = next(next(next(astroid.get_children()).get_children()).get_children())
@@ -45,7 +42,7 @@ class Python3TC(unittest.TestCase):
         def func():
             yield from iter([1, 2])
         """)
-        astroid = self.builder.string_build(body)
+        astroid = builder.parse(body)
         func = astroid.body[0]
         self.assertIsInstance(func, FunctionDef)
         yieldfrom_stmt = func.body[0]
@@ -61,7 +58,7 @@ class Python3TC(unittest.TestCase):
         def func():
             yield from iter([1, 2])
         """)
-        astroid = self.builder.string_build(body)
+        astroid = builder.parse(body)
         func = astroid.body[0]
         self.assertIsInstance(func, FunctionDef)
         self.assertTrue(func.is_generator())
@@ -73,7 +70,7 @@ class Python3TC(unittest.TestCase):
             yield from iter([1, 2])
             value = yield from other()
         """)
-        astroid = self.builder.string_build(body)
+        astroid = builder.parse(body)
         func = astroid.body[0]
         self.assertEqual(func.as_string().strip(), body.strip())
 
@@ -81,7 +78,7 @@ class Python3TC(unittest.TestCase):
 
     @test_utils.require_version('3.0')
     def test_simple_metaclass(self):
-        astroid = self.builder.string_build("class Test(metaclass=type): pass")
+        astroid = builder.parse("class Test(metaclass=type): pass")
         klass = astroid.body[0]
 
         metaclass = klass.metaclass()
@@ -90,13 +87,13 @@ class Python3TC(unittest.TestCase):
 
     @test_utils.require_version('3.0')
     def test_metaclass_error(self):
-        astroid = self.builder.string_build("class Test(metaclass=typ): pass")
+        astroid = builder.parse("class Test(metaclass=typ): pass")
         klass = astroid.body[0]
         self.assertFalse(klass.metaclass())
 
     @test_utils.require_version('3.0')
     def test_metaclass_imported(self):
-        astroid = self.builder.string_build(dedent("""
+        astroid = builder.parse(dedent("""
         from abc import ABCMeta 
         class Test(metaclass=ABCMeta): pass"""))
         klass = astroid.body[1]
@@ -110,7 +107,7 @@ class Python3TC(unittest.TestCase):
         body = dedent("""
         from abc import ABCMeta 
         class Test(metaclass=ABCMeta): pass""")
-        astroid = self.builder.string_build(body)
+        astroid = builder.parse(body)
         klass = astroid.body[1]
 
         self.assertEqual(klass.as_string(),
@@ -118,7 +115,7 @@ class Python3TC(unittest.TestCase):
 
     @test_utils.require_version('3.0')
     def test_old_syntax_works(self):
-        astroid = self.builder.string_build(dedent("""
+        astroid = builder.parse(dedent("""
         class Test:
             __metaclass__ = type
         class SubTest(Test): pass
@@ -129,7 +126,7 @@ class Python3TC(unittest.TestCase):
 
     @test_utils.require_version('3.0')
     def test_metaclass_yes_leak(self):
-        astroid = self.builder.string_build(dedent("""
+        astroid = builder.parse(dedent("""
         # notice `ab` instead of `abc`
         from ab import ABCMeta
 
@@ -140,7 +137,7 @@ class Python3TC(unittest.TestCase):
 
     @test_utils.require_version('3.0')
     def test_parent_metaclass(self):
-        astroid = self.builder.string_build(dedent("""
+        astroid = builder.parse(dedent("""
         from abc import ABCMeta
         class Test(metaclass=ABCMeta): pass
         class SubTest(Test): pass
@@ -153,7 +150,7 @@ class Python3TC(unittest.TestCase):
 
     @test_utils.require_version('3.0')
     def test_metaclass_ancestors(self):
-        astroid = self.builder.string_build(dedent("""
+        astroid = builder.parse(dedent("""
         from abc import ABCMeta
 
         class FirstMeta(metaclass=ABCMeta): pass
