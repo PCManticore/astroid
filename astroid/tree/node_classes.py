@@ -733,14 +733,6 @@ class Raise(Statement):
         self.cause = cause
         self.traceback = traceback
 
-    # TODO: check if is needed and if it works as is
-    def raises_not_implemented(self):
-        if not self.exc:
-            return
-        for name in self.exc.nodes_of_class(Name):
-            if name.name == 'NotImplementedError':
-                return True
-
 
 class Return(Statement):
     """class representing a Return node"""
