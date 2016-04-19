@@ -514,14 +514,6 @@ class ExceptHandler(Statement):
         else:
             return self.lineno
 
-    # TODO: check if it works and if it is needed as is.
-    def catch(self, exceptions):
-        if self.type is None or exceptions is None:
-            return True
-        for node in self.type.nodes_of_class(Name):
-            if node.name in exceptions:
-                return True
-
 
 class Exec(Statement):
     """class representing an Exec node"""
