@@ -37,7 +37,6 @@ class NonRegressionTests(unittest.TestCase):
         astroid = builder.parse("def test(x=True): pass")
         default = astroid.body[0].args.args[0]
         self.assertEqual(default.name, 'x')
-        self.assertEqual(next(default.infer()).value, True)
 
     def test_unicode_in_docstring(self):
          # Crashed for astroid==1.4.1
