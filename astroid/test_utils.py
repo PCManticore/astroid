@@ -213,17 +213,3 @@ def require_version(minver=None, maxver=None):
 
 
     return check_require_version
-
-def get_name_node(start_from, name, index=0):
-    return [n for n in start_from.nodes_of_class(nodes.Name) if n.name == name][index]
-
-
-@contextlib.contextmanager
-def enable_warning(warning):
-    warnings.simplefilter('always', warning)
-    try:
-        yield
-    finally:
-        # Reset it to default value, so it will take
-        # into account the values from the -W flag.
-        warnings.simplefilter('default', warning)
