@@ -50,8 +50,6 @@ from astroid.tree.node_classes import (
     Module, GeneratorExp, Lambda, DictComp,
     ListComp, SetComp, FunctionDef, ClassDef,
     AsyncFunctionDef,
-    # Special nodes for building from live objects.
-    # InterpreterObject, ReservedName, Unknown, 
 )
 
 ALL_NODE_CLASSES = (
@@ -64,16 +62,16 @@ ALL_NODE_CLASSES = (
     Ellipsis, ExceptHandler, Exec, ExtSlice,
     For, ImportFrom, FunctionDef,
     Attribute, GeneratorExp, Global,
-    If, IfExp, Import, Index, # InterpreterObject, 
+    If, IfExp, Import, Index,
     Keyword,
     Lambda, List, ListComp,
     Name, NameConstant, Nonlocal,
     Module,
     Parameter, Pass, Print,
-    Raise, Return, # ReservedName, 
+    Raise, Return,
     Set, SetComp, Slice, Starred, Subscript,
     TryExcept, TryFinally, Tuple,
-    UnaryOp, # Unknown,
+    UnaryOp,
     While, With, WithItem,
     Yield, YieldFrom,
     )

@@ -34,6 +34,7 @@ class Statement(base.NodeNG):
     """Statement node adding a few attributes"""
     is_statement = True
 
+    # TODO: is this equivalent to zipper's next/previous sibling?
     def next_sibling(self):
         """return the next sibling statement"""
         stmts = self.parent.child_sequence(self)
@@ -400,22 +401,7 @@ class Const(base.NodeNG):
 class NameConstant(Const):
     """Represents a builtin singleton, at the moment True, False, None,
     and NotImplemented.
-
     """
-
-
-# TODO: check if needed
-class ReservedName(base.NodeNG):
-    '''Used in the builtins AST to assign names to singletons.'''
-    _astroid_fields = ('value',)
-    _other_fields = ('name',)
-
-    def __init__(self, name, lineno=None, col_offset=None, parent=None):
-        self.name = name
-        super(ReservedName, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, value):
-        self.value = value
 
 
 class Continue(Statement):
@@ -519,6 +505,7 @@ class ExceptHandler(base.AssignTypeMixin, Statement):
         else:
             return self.lineno
 
+    # TODO: check if it works and if it is needed as is.
     def catch(self, exceptions):
         if self.type is None or exceptions is None:
             return True
@@ -751,6 +738,7 @@ class Raise(Statement):
             self.exc = exc
             self.cause = cause
 
+    # TODO: check if is needed and if it works as is
     def raises_not_implemented(self):
         if not self.exc:
             return
