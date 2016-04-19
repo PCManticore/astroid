@@ -1097,10 +1097,6 @@ class Module(QualifiedNameMixin, base.NodeNG):
             return '%s.%s' % (package_name, modname)
         return modname
 
-    def public_names(self):
-        """Get the list of the names which are publicly available in this module."""
-        return [name for name in self.keys() if not name.startswith('_')]
-
 
 class ComprehensionScope(base.NodeNG):
 
