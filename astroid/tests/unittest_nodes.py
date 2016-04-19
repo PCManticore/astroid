@@ -738,11 +738,6 @@ class FunctionNodeTest(ModuleLoader, unittest.TestCase):
         func = tree.down().down()
         self.assertEqual(func.args.format_args(), 'a, b, c, d')
 
-    def test_four_args(self):
-        four_args = self.nodes['four_args']
-        self.assertEqual(four_args.args.args, ['a', ('b', 'c', 'd')])
-        self.assertEqual(four_args.type, 'function')
-
     def test_format_args(self):
         make_class = self.nodes2['make_class']
         self.assertEqual(make_class.args.format_args(),
