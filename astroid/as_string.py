@@ -319,13 +319,13 @@ class AsStringVisitor(object):
     def visit_raise(self, node):
         """return an astroid.Raise node as string"""
         if node.exc:
-            if node.inst:
-                if node.tback:
+            if node.cause:
+                if node.traceback:
                     return 'raise %s, %s, %s' % (node.exc.accept(self),
-                                                 node.inst.accept(self),
-                                                 node.tback.accept(self))
+                                                 node.cause.accept(self),
+                                                 node.traceback.accept(self))
                 return 'raise %s, %s' % (node.exc.accept(self),
-                                         node.inst.accept(self))
+                                         node.cause.accept(self))
             return 'raise %s' % node.exc.accept(self)
         return 'raise'
 

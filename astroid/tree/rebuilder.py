@@ -806,7 +806,6 @@ class TreeRebuilder3(TreeRebuilder):
     def visit_raise(self, node, parent):
         """visit a Raise node by returning a fresh instance of it"""
         newnode = nodes.Raise(node.lineno, node.col_offset, parent)
-        # no traceback; anyway it is not used in Pylint
         newnode.postinit(_visit_or_empty(node, 'exc', self, newnode),
                          _visit_or_empty(node, 'cause', self, newnode))
         return newnode

@@ -726,25 +726,12 @@ class Print(Statement):
 
 class Raise(Statement):
     """class representing a Raise node"""
-    # TODO: should look the same for both Python 2 and 3
-    exc = Empty
-    if six.PY2:
-        _astroid_fields = ('exc', 'inst', 'tback')
-        inst = Empty
-        tback = Empty
+    _astroid_fields = ('exc', 'cause', 'traceback')
 
-        def postinit(self, exc=Empty, inst=Empty, tback=Empty):
-            self.exc = exc
-            self.inst = inst
-            self.tback = tback
-    else:
-        _astroid_fields = ('exc', 'cause')
-        exc = Empty
-        cause = Empty
-
-        def postinit(self, exc=Empty, cause=Empty):
-            self.exc = exc
-            self.cause = cause
+    def postinit(self, exc=Empty, cause=Empty, traceback=Empty):
+        self.exc = exc
+        self.cause = cause
+        self.traceback = traceback
 
     # TODO: check if is needed and if it works as is
     def raises_not_implemented(self):

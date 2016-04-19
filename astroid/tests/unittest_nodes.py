@@ -50,6 +50,25 @@ class AsStringTest(unittest.TestCase):
                 #     parse(ast.as_string()).print_tree()
                 self.assertEqual(ast, parse(ast.as_string()))
 
+    @test_utils.require_version(maxver='3.0')
+    def test_raise_python_2(self):
+        first = 'raise'
+        self.assertEqual(parse(first).as_string().strip(), first)
+
+        second = 'raise 1, 2'
+        self.assertEqual(parse(second).as_string().strip(), second)
+
+        third = 'raise 1, 2, 3'
+        self.assertEqual(parse(third).as_string().strip(), third)
+
+    @test_utils.require_version(minver='3.0')
+    def test_raise_python_3(self):
+        first = 'raise'
+        self.assertEqual(parse(first).as_string().strip(), first)
+
+        second = 'raise 1 from 2'
+        self.assertEqual(parse(second).as_string().strip(), second)
+
     def test_tuple_as_string(self):
         def build(string):
             return builder.parse(string).body[0].value
