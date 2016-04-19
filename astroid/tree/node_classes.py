@@ -53,7 +53,7 @@ class Statement(base.NodeNG):
 
 
 
-class BaseAssignName(base.ParentAssignTypeMixin, base.NodeNG):
+class BaseAssignName(base.NodeNG):
     _other_fields = ('name',)
 
     def __init__(self, name=None, lineno=None, col_offset=None, parent=None):
@@ -95,7 +95,7 @@ class Parameter(BaseAssignName):
         self.annotation = annotation
 
 
-class DelName(base.ParentAssignTypeMixin, base.NodeNG):
+class DelName(base.NodeNG):
     """class representing a DelName node"""
     _other_fields = ('name',)
 
@@ -113,7 +113,7 @@ class Name(base.NodeNG):
         super(Name, self).__init__(lineno, col_offset, parent)
     
 
-class Arguments(base.AssignTypeMixin, base.NodeNG):
+class Arguments(base.NodeNG):
     """class representing an Arguments node"""
 
     _astroid_fields = ('args', 'vararg', 'kwarg', 'keyword_only', 'positional_only')
@@ -223,8 +223,7 @@ class Arguments(base.AssignTypeMixin, base.NodeNG):
 
 
 
-class AssignAttr(base.ParentAssignTypeMixin,
-                 base.NodeNG):
+class AssignAttr(base.NodeNG):
     """class representing an AssignAttr node"""
     _astroid_fields = ('expr',)
     _other_fields = ('attrname',)
@@ -249,7 +248,7 @@ class Assert(Statement):
         self.test = test
 
 
-class Assign(base.AssignTypeMixin, Statement):
+class Assign(Statement):
     """class representing an Assign node"""
     _astroid_fields = ('targets', 'value',)
     targets = Empty
@@ -260,7 +259,7 @@ class Assign(base.AssignTypeMixin, Statement):
         self.value = value
 
 
-class AugAssign(base.AssignTypeMixin, Statement):
+class AugAssign(Statement):
     """class representing an AugAssign node"""
     _astroid_fields = ('target', 'value')
     _other_fields = ('op',)
@@ -384,10 +383,6 @@ class Comprehension(base.NodeNG):
         self.iter = iter
         self.ifs = ifs
 
-   # TODO: check if we have assign_type for all other nodes that creates scope.
-    def assign_type(self):
-        return self
-
 
 class Const(base.NodeNG):
     """represent a constant node like num, str, bytes"""
@@ -417,7 +412,7 @@ class Decorators(base.NodeNG):
         self.nodes = nodes
 
 
-class DelAttr(base.ParentAssignTypeMixin, base.NodeNG):
+class DelAttr(base.NodeNG):
     """class representing a DelAttr node"""
     _astroid_fields = ('expr',)
     _other_fields = ('attrname',)
@@ -431,7 +426,7 @@ class DelAttr(base.ParentAssignTypeMixin, base.NodeNG):
         self.expr = expr
 
 
-class Delete(base.AssignTypeMixin, Statement):
+class Delete(Statement):
     """class representing a Delete node"""
     _astroid_fields = ('targets',)
     targets = Empty
@@ -484,7 +479,7 @@ class Ellipsis(base.NodeNG): # pylint: disable=redefined-builtin
     """class representing an Ellipsis node"""
 
 
-class ExceptHandler(base.AssignTypeMixin, Statement):
+class ExceptHandler(Statement):
     """class representing an ExceptHandler node"""
     _astroid_fields = ('type', 'name', 'body',)
     type = Empty
@@ -536,8 +531,7 @@ class ExtSlice(base.NodeNG):
         self.dims = dims
 
 
-class For(base.BlockRangeMixIn, base.AssignTypeMixin,
-          Statement):
+class For(base.BlockRangeMixIn, Statement):
     """class representing a For node"""
     _astroid_fields = ('target', 'iter', 'body', 'orelse',)
     target = Empty
@@ -572,7 +566,7 @@ class Await(base.NodeNG):
         self.value = value
 
 
-class ImportFrom(base.FilterStmtsMixin, Statement):
+class ImportFrom(Statement):
     """class representing a ImportFrom node"""
     _other_fields = ('modname', 'names', 'level')
 
@@ -646,7 +640,7 @@ class IfExp(base.NodeNG):
         self.orelse = orelse
 
 
-class Import(base.FilterStmtsMixin, Statement):
+class Import(Statement):
     """class representing an Import node"""
     _other_fields = ('names',)
 
@@ -774,7 +768,7 @@ class Slice(base.NodeNG):
         self.step = step
 
 
-class Starred(base.ParentAssignTypeMixin, base.NodeNG):
+class Starred(base.NodeNG):
     """class representing a Starred node"""
     _astroid_fields = ('value',)
     _other_fields = ('ctx', )
@@ -897,8 +891,7 @@ class While(base.BlockRangeMixIn, Statement):
         return self._elsed_block_range(lineno, self.orelse)
 
 
-class With(base.BlockRangeMixIn, base.AssignTypeMixin,
-           Statement):
+class With(base.BlockRangeMixIn, Statement):
     """class representing a With node"""
     _astroid_fields = ('items', 'body')
 
@@ -916,7 +909,7 @@ class With(base.BlockRangeMixIn, base.AssignTypeMixin,
         return self.items[-1].context_expr.tolineno
 
 
-class WithItem(base.ParentAssignTypeMixin, base.NodeNG):
+class WithItem(base.NodeNG):
     _astroid_fields = ('context_expr', 'optional_vars')
     context_expr = Empty
     optional_vars = Empty
@@ -1158,7 +1151,7 @@ else:
         """class representing a ListComp node"""
 
 
-class LambdaFunctionMixin(base.FilterStmtsMixin, base.NodeNG):
+class LambdaFunctionMixin(base.NodeNG):
     """Common code for lambda and functions."""
 
     def argnames(self):
@@ -1260,7 +1253,7 @@ class AsyncFunctionDef(FunctionDef):
 
 
 # TODO: what base classes to keep?
-class ClassDef(base.FilterStmtsMixin, Statement):
+class ClassDef(Statement):
 
     _astroid_fields = ('decorators', 'bases', 'body', 'keywords')
     _other_fields = ('name', 'doc')

@@ -400,29 +400,8 @@ class BlockRangeMixIn(object):
         return lineno, last or self.tolineno
 
 
-class FilterStmtsMixin(object):
-    """Mixin for statement filtering and assignment type"""
-
-    def assign_type(self):
-        return self
-
-
-# TODO: can be single dispatched
-class AssignTypeMixin(object):
-
-    def assign_type(self):
-        return self
-
-
-class ParentAssignTypeMixin(AssignTypeMixin):
-
-    def assign_type(self):
-        return self.parent.assign_type()
-
-
-
 @six.add_metaclass(abc.ABCMeta)
-class BaseContainer(ParentAssignTypeMixin, NodeNG):
+class BaseContainer(NodeNG):
     """Base class for Set, FrozenSet, Tuple and List."""
 
     _astroid_fields = ('elts',)

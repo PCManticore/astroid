@@ -20,6 +20,7 @@ import unittest
 
 from astroid import builder
 from astroid import nodes
+from astroid import scope
 from astroid.tree.node_classes import (Assign, Expr, YieldFrom, Name,
                                        Const, ClassDef, FunctionDef)
 from astroid import test_utils
@@ -34,7 +35,7 @@ class Python3TC(unittest.TestCase):
         # Get the star node
         node = next(next(next(astroid.get_children()).get_children()).get_children())
 
-        self.assertTrue(isinstance(node.assign_type(), Assign))
+        self.assertTrue(isinstance(scope.assign_type(node), Assign))
 
     @test_utils.require_version('3.3')
     def test_yield_from(self):

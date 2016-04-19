@@ -115,3 +115,30 @@ def _scoped_nodes(node):
 
 if six.PY3:
     node_scope.register(node_classes.ListComp, _scoped_nodes)
+
+
+@util.singledispatch
+def assign_type(node):
+    '''Get the assign type of the given node.
+
+    The assign type is the node which introduces this node as name binding
+    node. For instance, the assign type of the iteration step in a for loop
+    is the for itself.
+    '''
+    return node
+
+
+@assign_type.register(node_classes.DelName)
+@assign_type.register(node_classes.AssignAttr)
+@assign_type.register(node_classes.DelAttr)
+@assign_type.register(node_classes.Starred)
+@assign_type.register(node_classes.WithItem)
+@assign_type.register(node_classes.AssignName)
+@assign_type.register(node_classes.Parameter)
+@assign_type.register(node_classes.List)
+@assign_type.register(node_classes.Set)
+@assign_type.register(node_classes.Tuple)
+@assign_type.register(node_classes.Dict)
+def _parent_assign_type(node):
+    '''Get the assign type of the parent instead.'''
+    return assign_type(node.parent)
