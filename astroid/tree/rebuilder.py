@@ -346,25 +346,18 @@ class TreeRebuilder(object):
         node, doc = _get_doc(node)
         newnode = nodes.ClassDef(node.name, doc, node.lineno,
                                  node.col_offset, parent)
-        # metaclass = None
-        # if PY3:
-        #     for keyword in node.keywords:
-        #         if keyword.arg == 'metaclass':
-        #             metaclass = self.visit(keyword, newnode).value
-        #         break
-        # TODO: store the keywords as well in the class. We need later on in
-        #       astroid to process the metaclass, but we'll lose it otherwise.
-        #       Also, the additional keys that were passed into the class
-        #       can potentially be used for other validations in astroid / pylint.
+        if PY3:
+            keywords = [self.visit_keyword(keyword, newnode) for keyword in node.keywords]
+        else:
+            keywords = []
         if node.decorator_list:
             decorators = self.visit_decorators(node, newnode)
         else:
-            decorators = nodes.Empty
-        newnode.postinit([self.visit(child, newnode)
-                          for child in node.bases],
-                         [self.visit(child, newnode)
-                          for child in node.body],
-                         decorators) #, newstyle, metaclass)
+            decorators = []
+        newnode.postinit(bases=[self.visit(child, newnode) for child in node.bases],
+                         body=[self.visit(child, newnode) for child in node.body],
+                         decorators=decorators,
+                         keywords=keywords)
         return newnode
 
     def visit_const(self, node, parent):

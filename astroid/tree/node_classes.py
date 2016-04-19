@@ -1274,7 +1274,7 @@ class AsyncFunctionDef(FunctionDef):
 # TODO: what base classes to keep?
 class ClassDef(base.FilterStmtsMixin, Statement):
 
-    _astroid_fields = ('decorators', 'bases', 'body')
+    _astroid_fields = ('decorators', 'bases', 'body', 'keywords')
     _other_fields = ('name', 'doc')
     decorators = Empty
 
@@ -1286,10 +1286,11 @@ class ClassDef(base.FilterStmtsMixin, Statement):
         self.doc = doc
         super(ClassDef, self).__init__(lineno, col_offset, parent)
 
-    def postinit(self, bases, body, decorators):
+    def postinit(self, bases, body=[], decorators=[], keywords=[]):
         self.bases = bases
         self.body = body
         self.decorators = decorators
+        self.keywords = keywords
 
     @property
     def blockstart_tolineno(self):
