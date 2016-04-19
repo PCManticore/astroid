@@ -735,7 +735,6 @@ class Return(Statement):
         self.value = value
 
 
-# TODO: check BaseCOntainer
 class Set(BaseContainer):
     """class representing a Set node"""
     
@@ -1181,14 +1180,9 @@ class Lambda(LambdaFunctionMixin):
         self.body = body
 
 
-# TODO: what baseclasses to keep?
 class FunctionDef(LambdaFunctionMixin, Statement):
 
-    # TODO: this should look the same
-    if six.PY3:
-        _astroid_fields = ('decorators', 'args', 'body', 'returns')
-    else:
-        _astroid_fields = ('decorators', 'args', 'body')
+    _astroid_fields = ('decorators', 'args', 'body', 'returns')
     _other_fields = ('name', 'doc')
     decorators = Empty
 
@@ -1237,7 +1231,6 @@ class AsyncFunctionDef(FunctionDef):
     """Asynchronous function created with the `async` keyword."""
 
 
-# TODO: what base classes to keep?
 class ClassDef(Statement):
 
     _astroid_fields = ('decorators', 'bases', 'body', 'keywords')
