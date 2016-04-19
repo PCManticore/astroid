@@ -352,6 +352,10 @@ class TreeRebuilder(object):
         #         if keyword.arg == 'metaclass':
         #             metaclass = self.visit(keyword, newnode).value
         #         break
+        # TODO: store the keywords as well in the class. We need later on in
+        #       astroid to process the metaclass, but we'll lose it otherwise.
+        #       Also, the additional keys that were passed into the class
+        #       can potentially be used for other validations in astroid / pylint.
         if node.decorator_list:
             decorators = self.visit_decorators(node, newnode)
         else:
