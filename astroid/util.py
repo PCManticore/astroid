@@ -20,14 +20,11 @@
 # the same license.
 
 import importlib
-import platform
 import sys
 import warnings
 
 import six
 import wrapt
-
-JYTHON = True if platform.python_implementation() == 'Jython' else False
 
 try:
     from functools import singledispatch
