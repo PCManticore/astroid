@@ -22,7 +22,7 @@ import itertools
 
 import six
 
-from astroid.tree import treeabc
+from astroid.tree import node_classes
 from astroid import util
 
 
@@ -46,7 +46,7 @@ def _node_arguments(node):
             yield arg
 
 
-@_scope_by_parent.register(treeabc.Arguments)
+@_scope_by_parent.register(node_classes.Arguments)
 def _scope_by_argument_parent(parent, node):
     args = parent
     for param in itertools.chain(args.positional_and_keyword, args.keyword_only):
@@ -57,7 +57,7 @@ def _scope_by_argument_parent(parent, node):
         return args.parent.parent.scope()
 
 
-@_scope_by_parent.register(treeabc.FunctionDef)
+@_scope_by_parent.register(node_classes.FunctionDef)
 def _scope_by_function_parent(parent, node):
     # Verify if the node is the return annotation of a function,
     # in which case the scope is the parent scope of the function.
@@ -65,7 +65,7 @@ def _scope_by_function_parent(parent, node):
         return parent.parent.scope()
 
 
-@_scope_by_parent.register(treeabc.Comprehension)
+@_scope_by_parent.register(node_classes.Comprehension)
 def _scope_by_comprehension_parent(parent, node):
     # Get the scope of a node which has a comprehension
     # as a parent. The rules are a bit hairy, but in essence
@@ -86,7 +86,7 @@ def _scope_by_comprehension_parent(parent, node):
 
     # This might not be correct for all the cases, but it
     # should be enough for most of them.
-    if six.PY2 and isinstance(parent_scope, treeabc.ListComp):
+    if six.PY2 and isinstance(parent_scope, node_classes.ListComp):
         return parent_scope.parent.scope()
     return parent.scope()
 
@@ -98,20 +98,20 @@ def node_scope(node):
     return scope or node.parent.scope()
 
 
-@node_scope.register(treeabc.Decorators)
+@node_scope.register(node_classes.Decorators)
 def _decorators_scope(node):
     return node.parent.parent.scope()
 
 
-@node_scope.register(treeabc.Module)
-@node_scope.register(treeabc.GeneratorExp)
-@node_scope.register(treeabc.DictComp)
-@node_scope.register(treeabc.SetComp)
-@node_scope.register(treeabc.Lambda)
-@node_scope.register(treeabc.FunctionDef)
-@node_scope.register(treeabc.ClassDef)
+@node_scope.register(node_classes.Module)
+@node_scope.register(node_classes.GeneratorExp)
+@node_scope.register(node_classes.DictComp)
+@node_scope.register(node_classes.SetComp)
+@node_scope.register(node_classes.Lambda)
+@node_scope.register(node_classes.FunctionDef)
+@node_scope.register(node_classes.ClassDef)
 def _scoped_nodes(node):
     return node
 
 if six.PY3:
-    node_scope.register(treeabc.ListComp, _scoped_nodes)
+    node_scope.register(node_classes.ListComp, _scoped_nodes)

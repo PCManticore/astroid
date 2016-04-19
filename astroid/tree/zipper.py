@@ -17,7 +17,7 @@ import collections
 # time an AST node method has to be accessed through a new zipper.
 import wrapt
 
-# from astroid.interpreter import scope
+from astroid import scope
 # from astroid.tree import base
 # from astroid.tree import treeabc
 from astroid.tree import node_classes
@@ -427,6 +427,16 @@ class Zipper(wrapt.ObjectProxy):
     # # FIXME : should we merge child_sequence and locate_child ? locate_child
     # # is only used in are_exclusive, child_sequence one time in pylint.
 
+    def qname(self):
+        """Return the 'qualified' name of the node."""
+        if not isinstance(self, (node_classes.ClassDef,
+                                 node_classes.Module,
+                                 node_classes.LambdaFunctionMixin)):
+            raise TypeError('This node has no qualified name.')
+        if not self._self_path:
+            return self.name
+        return '%s.%s' % (self.parent.frame().qname(), self.name)
+
     def frame(self):
         '''Go to the first ancestor of the focus that creates a new frame.
 
@@ -439,16 +449,16 @@ class Zipper(wrapt.ObjectProxy):
             location = location.up()
         return location
 
-    # def scope(self):
-    #     """Get the first node defining a new scope
+    def scope(self):
+        """Get the first node defining a new scope
 
-    #     Scopes are introduced in Python 3 by Module, FunctionDef,
-    #     ClassDef, Lambda, GeneratorExp, and comprehension nodes.  On
-    #     Python 2, the same is true except that list comprehensions
-    #     don't generate a new scope.
+        Scopes are introduced in Python 3 by Module, FunctionDef,
+        ClassDef, Lambda, GeneratorExp, and comprehension nodes.  On
+        Python 2, the same is true except that list comprehensions
+        don't generate a new scope.
 
-    #     """
-    #     return scope.node_scope(self)
+        """
+        return scope.node_scope(self)
 
     def statement(self):
         '''Go to the first ancestor of the focus that's a Statement.

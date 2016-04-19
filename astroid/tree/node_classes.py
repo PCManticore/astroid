@@ -960,16 +960,8 @@ class DictUnpack(base.NodeNG):
     """Represents the unpacking of dicts into dicts using PEP 448."""
 
 
-class QualifiedNameMixin(object):
 
-    def qname(node):
-        """Return the 'qualified' name of the node."""
-        if node.parent is None:
-            return node.name
-        return '%s.%s' % (node.parent.frame().qname(), node.name)
-
-
-class Module(QualifiedNameMixin, base.NodeNG):
+class Module(base.NodeNG):
     _astroid_fields = ('body',)
 
     fromlineno = 0
@@ -1179,7 +1171,7 @@ else:
         """class representing a ListComp node"""
 
 
-class LambdaFunctionMixin(QualifiedNameMixin, base.FilterStmtsMixin, base.NodeNG):
+class LambdaFunctionMixin(base.FilterStmtsMixin, base.NodeNG):
     """Common code for lambda and functions."""
 
     def argnames(self):
@@ -1211,6 +1203,8 @@ def _rec_get_names(args, names=None):
 
 class Lambda(LambdaFunctionMixin):
     _astroid_fields = ('args', 'body',)
+    _other_fields = ('name',)
+    name = '<lambda>'
 
     def __init__(self, lineno=None, col_offset=None, parent=None):
         self.args = []
@@ -1279,7 +1273,7 @@ class AsyncFunctionDef(FunctionDef):
 
 
 # TODO: what base classes to keep?
-class ClassDef(QualifiedNameMixin, base.FilterStmtsMixin, Statement):
+class ClassDef(base.FilterStmtsMixin, Statement):
 
     _astroid_fields = ('decorators', 'bases', 'body')
     _other_fields = ('name', 'doc')

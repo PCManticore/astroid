@@ -31,9 +31,9 @@ import wrapt
 JYTHON = True if platform.python_implementation() == 'Jython' else False
 
 try:
-    from functools import singledispatch as _singledispatch
+    from functools import singledispatch
 except ImportError:
-    from singledispatch import singledispatch as _singledispatch
+    from singledispatch import singledispatch
 
 
 def lazy_import(module_name):

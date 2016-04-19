@@ -22,7 +22,7 @@ from astroid import nodes
 from astroid.tree.node_classes import (Assign, Expr, YieldFrom, Name,
                                        Const, ClassDef, FunctionDef)
 from astroid.builder import AstroidBuilder
-from astroid.test_utils import require_version, extract_node
+from astroid import test_utils
 
 
 class Python3TC(unittest.TestCase):
@@ -30,7 +30,7 @@ class Python3TC(unittest.TestCase):
     def setUpClass(cls):
         cls.builder = AstroidBuilder()
 
-    @require_version('3.0')
+    @test_utils.require_version('3.0')
     def test_starred_notation(self):
         astroid = self.builder.string_build("*a, b = [1, 2, 3]", 'test', 'test')
 
@@ -39,7 +39,7 @@ class Python3TC(unittest.TestCase):
 
         self.assertTrue(isinstance(node.assign_type(), Assign))
 
-    @require_version('3.3')
+    @test_utils.require_version('3.3')
     def test_yield_from(self):
         body = dedent("""
         def func():
@@ -55,7 +55,7 @@ class Python3TC(unittest.TestCase):
         self.assertEqual(yieldfrom_stmt.as_string(),
                          'yield from iter([1, 2])')
 
-    @require_version('3.3')
+    @test_utils.require_version('3.3')
     def test_yield_from_is_generator(self):
         body = dedent("""
         def func():
@@ -66,7 +66,7 @@ class Python3TC(unittest.TestCase):
         self.assertIsInstance(func, FunctionDef)
         self.assertTrue(func.is_generator())
 
-    @require_version('3.3')
+    @test_utils.require_version('3.3')
     def test_yield_from_as_string(self):
         body = dedent("""
         def func():
@@ -79,7 +79,7 @@ class Python3TC(unittest.TestCase):
 
     # metaclass tests
 
-    @require_version('3.0')
+    @test_utils.require_version('3.0')
     def test_simple_metaclass(self):
         astroid = self.builder.string_build("class Test(metaclass=type): pass")
         klass = astroid.body[0]
@@ -88,13 +88,13 @@ class Python3TC(unittest.TestCase):
         self.assertIsInstance(metaclass, ClassDef)
         self.assertEqual(metaclass.name, 'type')
 
-    @require_version('3.0')
+    @test_utils.require_version('3.0')
     def test_metaclass_error(self):
         astroid = self.builder.string_build("class Test(metaclass=typ): pass")
         klass = astroid.body[0]
         self.assertFalse(klass.metaclass())
 
-    @require_version('3.0')
+    @test_utils.require_version('3.0')
     def test_metaclass_imported(self):
         astroid = self.builder.string_build(dedent("""
         from abc import ABCMeta 
@@ -105,7 +105,7 @@ class Python3TC(unittest.TestCase):
         self.assertIsInstance(metaclass, ClassDef)
         self.assertEqual(metaclass.name, 'ABCMeta')
 
-    @require_version('3.0')
+    @test_utils.require_version('3.0')
     def test_as_string(self):
         body = dedent("""
         from abc import ABCMeta 
@@ -116,7 +116,7 @@ class Python3TC(unittest.TestCase):
         self.assertEqual(klass.as_string(),
                          '\n\nclass Test(metaclass=ABCMeta):\n    pass\n')
 
-    @require_version('3.0')
+    @test_utils.require_version('3.0')
     def test_old_syntax_works(self):
         astroid = self.builder.string_build(dedent("""
         class Test:
@@ -127,7 +127,7 @@ class Python3TC(unittest.TestCase):
         metaclass = klass.metaclass()
         self.assertIsNone(metaclass)
 
-    @require_version('3.0')
+    @test_utils.require_version('3.0')
     def test_metaclass_yes_leak(self):
         astroid = self.builder.string_build(dedent("""
         # notice `ab` instead of `abc`
@@ -138,7 +138,7 @@ class Python3TC(unittest.TestCase):
         klass = astroid['Meta']
         self.assertIsNone(klass.metaclass())
 
-    @require_version('3.0')
+    @test_utils.require_version('3.0')
     def test_parent_metaclass(self):
         astroid = self.builder.string_build(dedent("""
         from abc import ABCMeta
@@ -151,7 +151,7 @@ class Python3TC(unittest.TestCase):
         self.assertIsInstance(metaclass, ClassDef)
         self.assertEqual(metaclass.name, 'ABCMeta')
 
-    @require_version('3.0')
+    @test_utils.require_version('3.0')
     def test_metaclass_ancestors(self):
         astroid = self.builder.string_build(dedent("""
         from abc import ABCMeta
@@ -179,14 +179,13 @@ class Python3TC(unittest.TestCase):
                 self.assertIsInstance(meta, ClassDef)
                 self.assertEqual(meta.name, metaclass)
 
-    @require_version('3.0')
+    @test_utils.require_version('3.0')
     def test_annotation_support(self):
-        astroid = self.builder.string_build(dedent("""
+        func = test_utils.extract_node("""
         def test(a: int, b: str, c: None, d, e,
-                 *args: float, **kwargs: int)->int:
+                 *args: float, **kwargs: int)->int: #@
             pass
         """))
-        func = astroid['test']
         self.assertIsInstance(func.args.vararg.annotation, Name)
         self.assertEqual(func.args.vararg.annotation.name, 'float')
         self.assertIsInstance(func.args.kwarg.annotation, Name)
@@ -203,18 +202,17 @@ class Python3TC(unittest.TestCase):
         self.assertIs(arguments.args[3].annotation, nodes.Empty)
         self.assertIs(arguments.args[4].annotation, nodes.Empty)
 
-        astroid = self.builder.string_build(dedent("""
-        def test(a: int=1, b: str=2):
+        func = test_utils.extract_node("""
+        def test(a: int=1, b: str=2): #@
             pass
         """))
-        func = astroid['test']
         self.assertIsInstance(func.args.args[0].annotation, Name)
         self.assertEqual(func.args.args[0].annotation.name, 'int')
         self.assertIsInstance(func.args.args[1].annotation, Name)
         self.assertEqual(func.args.args[1].annotation.name, 'str')
         self.assertIs(func.returns, nodes.Empty)
 
-    @require_version('3.0')
+    @test_utils.require_version('3.0')
     def test_annotation_as_string(self):
         code1 = dedent('''
         def test(a, b:int=4, c=2, f:'lala'=4)->2:
@@ -223,27 +221,27 @@ class Python3TC(unittest.TestCase):
         def test(a:typing.Generic[T], c:typing.Any=24)->typing.Iterable:
             pass''')
         for code in (code1, code2):
-            func = extract_node(code)
+            func = test_utils.extract_node(code)
             self.assertEqual(func.as_string(), code)
 
-    @require_version('3.5')
+    @test_utils.require_version('3.5')
     def test_unpacking_in_dicts(self):
         code = "{'x': 1, **{'y': 2}}"
-        node = extract_node(code)
+        node = test_utils.extract_node(code)
         self.assertEqual(node.as_string(), code)
         keys = [key for (key, _) in node.items]
         self.assertIsInstance(keys[0], nodes.Const)
         self.assertIsInstance(keys[1], nodes.DictUnpack)
 
-    @require_version('3.5')
+    @test_utils.require_version('3.5')
     def test_nested_unpacking_in_dicts(self):
         code = "{'x': 1, **{'y': 2, **{'z': 3}}}"
-        node = extract_node(code)
+        node = test_utils.extract_node(code)
         self.assertEqual(node.as_string(), code)
 
-    @require_version('3.5')
+    @test_utils.require_version('3.5')
     def test_unpacking_in_dict_getitem(self):
-        node = extract_node('{1:2, **{2:3, 3:4}, **{5: 6}}')
+        node = test_utils.extract_node('{1:2, **{2:3, 3:4}, **{5: 6}}')
         for key, expected in ((1, 2), (2, 3), (3, 4), (5, 6)):
             value = node.getitem(key)
             self.assertIsInstance(value, nodes.Const)
@@ -253,7 +251,7 @@ class Python3TC(unittest.TestCase):
     # probably provide support for positional-only parameters, but how
     # do we test it without raw_building?
 
-    # @require_version(minver='3.5')
+    # @test_utils.require_version(minver='3.5')
     # def test_positional_only_parameters(self):
     #     ast = raw_building.ast_from_object(issubclass)
     #     self.assertEqual(len(ast.args.positional_only), 2)
