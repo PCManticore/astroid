@@ -17,7 +17,6 @@
 # with astroid. If not, see <http://www.gnu.org/licenses/>.
 """this module contains exceptions used in the astroid library
 """
-from astroid import util
 
 
 class AstroidError(Exception):

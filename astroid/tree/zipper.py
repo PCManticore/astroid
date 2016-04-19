@@ -17,9 +17,8 @@ import collections
 # time an AST node method has to be accessed through a new zipper.
 import wrapt
 
-from astroid import exceptions
 # from astroid.interpreter import scope
-from astroid.tree import base
+# from astroid.tree import base
 # from astroid.tree import treeabc
 from astroid.tree import node_classes
 

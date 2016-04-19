@@ -17,13 +17,11 @@
 # with astroid. If not, see <http://www.gnu.org/licenses/>.
 import sys
 import unittest
-import textwrap
 
 import six
 
-from astroid import MANAGER, nodes
+from astroid import MANAGER
 from astroid.builder import AstroidBuilder
-from astroid import exceptions
 from astroid.manager import AstroidManager
 from astroid.test_utils import require_version, extract_node
 from astroid.tests import resources

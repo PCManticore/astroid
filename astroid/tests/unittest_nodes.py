@@ -29,12 +29,9 @@ import six
 import astroid
 from astroid import builder
 from astroid import exceptions
-from astroid.tree import node_classes
 from astroid import nodes
 from astroid import parse
-from astroid import util
 from astroid import test_utils
-from astroid import transforms
 from astroid.tests import resources
 
 abuilder = builder.AstroidBuilder()

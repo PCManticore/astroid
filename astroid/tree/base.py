@@ -18,7 +18,6 @@
 
 import abc
 import pprint
-import warnings
 
 import six
 

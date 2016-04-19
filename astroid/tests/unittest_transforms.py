@@ -19,7 +19,6 @@
 from __future__ import print_function
 
 import contextlib
-import time
 import unittest
 
 from astroid import builder

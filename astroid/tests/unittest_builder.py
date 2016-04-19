@@ -28,7 +28,6 @@ from astroid import exceptions
 from astroid import manager
 from astroid import nodes
 from astroid import test_utils
-from astroid import util
 from astroid.tests import resources
 
 MANAGER = manager.AstroidManager()
