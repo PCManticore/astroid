@@ -36,11 +36,13 @@ on ImportFrom and Import :
 """
 # pylint: disable=unused-import,redefined-builtin
 
+from astroid.tree.base import BaseNode, Empty
+
 from astroid.tree.node_classes import (
     Arguments, AssignAttr, Assert, Assign,
     AssignName, AugAssign, Repr, BinOp, BoolOp, Break, Call, Compare,
     Comprehension, Const, Continue, Decorators, DelAttr, DelName, Delete,
-    Dict, Empty, Expr, Ellipsis, ExceptHandler, Exec, ExtSlice, For,
+    Dict, Expr, Ellipsis, ExceptHandler, Exec, ExtSlice, For,
     ImportFrom, Attribute, Global, If, IfExp, Import, Index, Keyword,
     List, Name, NameConstant, Nonlocal, Pass, Parameter, Print, Raise, Return, Set, Slice,
     Starred, Subscript, TryExcept, TryFinally, Tuple, UnaryOp, While, With,
@@ -55,11 +57,11 @@ from astroid.tree.node_classes import (
 ALL_NODE_CLASSES = (
     AsyncFunctionDef, AsyncFor, AsyncWith, Await,
     Arguments, AssignAttr, Assert, Assign, AssignName, AugAssign,
-    Repr, BinOp, BoolOp, Break,
+    BaseNode, BinOp, BoolOp, Break,
     Call, ClassDef, Compare, Comprehension, Const, Continue,
     Decorators, DelAttr, DelName, Delete,
-    Dict, DictComp, DictUnpack, Expr,
-    Ellipsis, ExceptHandler, Exec, ExtSlice,
+    Dict, DictComp, DictUnpack,
+    Ellipsis, Empty, ExceptHandler, Exec, Expr, ExtSlice,
     For, ImportFrom, FunctionDef,
     Attribute, GeneratorExp, Global,
     If, IfExp, Import, Index,
@@ -68,7 +70,7 @@ ALL_NODE_CLASSES = (
     Name, NameConstant, Nonlocal,
     Module,
     Parameter, Pass, Print,
-    Raise, Return,
+    Raise, Repr, Return,
     Set, SetComp, Slice, Starred, Subscript,
     TryExcept, TryFinally, Tuple,
     UnaryOp,

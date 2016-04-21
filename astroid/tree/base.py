@@ -30,7 +30,7 @@ from astroid import util
 # representation of a node.
 FIELD_CHARACTERS_LIMIT = 160
 
-class NodeNG(object):
+class BaseNode(object):
     """Base Class for all Astroid node classes.
 
     It represents a node of the new abstract syntax tree.
@@ -322,13 +322,13 @@ class NodeNG(object):
                 broken = True
             result.append(']')
             return broken
-
+        
         # pylint: disable=unused-variable; doesn't understand singledispatch
-        @_repr_tree.register(NodeNG)
+        @_repr_tree.register(BaseNode)
         def _repr_node(node, result, done, cur_indent='', depth=1):
             """Outputs a strings representation of an astroid node."""
             if node in done:
-                result.append('<Recursion on %s with id=%s' %
+                result.append('<Recursion on %s with id=%s>' %
                               (type(node).__name__, id(node)))
                 return False
             else:
@@ -371,6 +371,12 @@ class NodeNG(object):
             result.append(')')
             return broken
 
+        # pylint: disable=unused-variable; doesn't understand singledispatch
+        @_repr_tree.register(type(Empty))
+        def _repr_empty(node, result, done, cur_indent='', depth=1):
+            result.append('Empty')
+            return False
+
         result = []
         _repr_tree(self, result, set())
         return ''.join(result)
@@ -398,3 +404,18 @@ class BlockRangeMixIn(object):
                 return lineno, orelse[-1].tolineno
             return lineno, orelse[0].fromlineno - 1
         return lineno, last or self.tolineno
+
+
+@object.__new__
+class Empty(BaseNode):
+    """Empty nodes represents the lack of something
+
+    For instance, they can be used to represent missing annotations
+    or defaults for arguments or anything where None is a valid
+    value.
+    """
+
+    def __bool__(self):
+        return False
+
+    __nonzero__ = __bool__

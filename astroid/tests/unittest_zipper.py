@@ -176,7 +176,7 @@ def get_children(label, ast):
 def _all_subclasses(cls):
     return cls.__subclasses__() + [g for s in cls.__subclasses__()
                                    for g in _all_subclasses(s)]
-node_types_strategy = strategies.sampled_from(_all_subclasses(base.NodeNG))
+node_types_strategy = strategies.sampled_from(_all_subclasses(base.BaseNode))
 
 
 class TestZipper(unittest.TestCase):
@@ -190,7 +190,7 @@ class TestZipper(unittest.TestCase):
 
     def check_zipper(self, position):
         '''Check that a zipper is correctly formed.'''
-        self.assertIsInstance(position, (base.NodeNG, collections.Sequence))
+        self.assertIsInstance(position, (base.BaseNode, collections.Sequence))
         self.assertIsInstance(position._self_path, (zipper.Path, type(None)))
         if position._self_path:
             self.assertIsInstance(position._self_path.parent_path, (zipper.Path, type(None)))
@@ -243,7 +243,7 @@ class TestZipper(unittest.TestCase):
         if random_node.up() is not None:
             if isinstance(random_node.up(), collections.Sequence) and random_node.up().up() is not None:
                 self.assertIs(random_node.parent.__wrapped__, random_node.up().up().__wrapped__)
-            if isinstance(random_node.up(), base.NodeNG):
+            if isinstance(random_node.up(), base.BaseNode):
                 self.assertIs(random_node.parent.__wrapped__, random_node.up().__wrapped__)
         if random_node.right() is not None:
             self.assertIs(random_node.last_child().__wrapped__, random_node.rightmost().__wrapped__)

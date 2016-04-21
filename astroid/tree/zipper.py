@@ -14,7 +14,7 @@ import collections
 import wrapt
 
 from astroid import scope
-# from astroid.tree import base
+from astroid.tree import base
 # from astroid.tree import treeabc
 from astroid.tree import node_classes
 
@@ -110,7 +110,7 @@ class Zipper(wrapt.ObjectProxy):
     attributes are accessible through it.
 
     Attributes:
-        __wrapped__ (base.NodeNG, collections.Sequence): The AST node or
+        __wrapped__ (base.BaseNode, collections.Sequence): The AST node or
             sequence at the zipper's focus.
         _self_path (Path): The Path tuple containing information about the
             zipper's history.  This must be accessed as ._self_path.
@@ -127,7 +127,7 @@ class Zipper(wrapt.ObjectProxy):
         '''Make a new zipper.
 
         Arguments:
-            focus (base.NodeNG, collections.Sequence): The focus for this
+            focus (base.BaseNode, collections.Sequence): The focus for this
                 zipper, will be assigned to self.__wrapped__ by
                 wrapt.ObjectProxy's __init__.
             path: The path of the zipper used to create the new zipper, if any.
@@ -261,8 +261,8 @@ class Zipper(wrapt.ObjectProxy):
             # This is a kludge to work around the problem of two Empty
             # nodes in different parts of an AST.  Empty nodes can
             # never be ancestors, so they can be safely skipped.
-            if self_ancestor is other_ancestor and self_ancestor is not node_classes.Empty:
-            # not isinstance(self_ancestor, node_classes.Empty):
+            if self_ancestor is other_ancestor and self_ancestor is not base.Empty:
+            # not isinstance(self_ancestor, base.Empty):
                 ancestor = self_ancestor
             else:
                 break
@@ -290,7 +290,7 @@ class Zipper(wrapt.ObjectProxy):
         '''Iterates over the descendants of the focus in prefix order.
 
         Arguments:
-            dont_recurse_on (base.NodeNG): If not None, will not include nodes
+            dont_recurse_on (base.BaseNode): If not None, will not include nodes
                 of this type or types or any of the descendants of those nodes.
         '''
         to_visit = [self]
@@ -309,7 +309,7 @@ class Zipper(wrapt.ObjectProxy):
         '''Iterates over the descendants of the focus in postfix order.
 
         Arguments:
-            dont_recurse_on (base.NodeNG): If not None, will not include nodes
+            dont_recurse_on (base.BaseNode): If not None, will not include nodes
                 of this type or types or any of the descendants of those nodes.
         '''
         to_visit = [self]
@@ -335,7 +335,7 @@ class Zipper(wrapt.ObjectProxy):
         prefix order.
 
         Arguments:
-            skip_class (base.NodeNG, tuple(base.NodeNG)): If not None, will
+            skip_class (base.BaseNode, tuple(base.BaseNode)): If not None, will
                 not include nodes of this type or types or any of the
                 descendants of those nodes.
         '''
@@ -357,7 +357,7 @@ class Zipper(wrapt.ObjectProxy):
         '''Replaces the existing node at the focus.
 
         Arguments:
-            focus (base.NodeNG, collections.Sequence): The object to replace
+            focus (base.BaseNode, collections.Sequence): The object to replace
                 the focus with.
         '''
         return type(self)(focus=focus, path=self._self_path._replace(changed=True))
