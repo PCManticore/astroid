@@ -85,8 +85,7 @@ class Parameter(BaseAssignName):
     _other_fields = ('name', )
 
     def __init__(self, name=None, lineno=None, col_offset=None, parent=None):
-        super(Parameter, self).__init__(name=name, lineno=lineno,
-                                        col_offset=col_offset, parent=parent)
+        super(Parameter, self).__init__(name=name, lineno=lineno, col_offset=col_offset, parent=parent)
 
     def postinit(self, default, annotation):
         self.default = default
@@ -115,7 +114,7 @@ class Arguments(base.BaseNode):
 
     _astroid_fields = ('args', 'vararg', 'kwarg', 'keyword_only', 'positional_only')
 
-    def __init__(self, parent=None):
+    def __init__(self, lineno=None, col_offset=None, parent=None):
         # We don't want lineno and col_offset from the parent's __init__.
         super(Arguments, self).__init__(parent=parent)
 
@@ -555,8 +554,7 @@ class ImportFrom(Statement):
 
     _other_fields = ('modname', 'names', 'level')
 
-    def __init__(self, fromname, names, level=0, lineno=None,
-                 col_offset=None, parent=None):
+    def __init__(self, fromname, names, level=0, lineno=None, col_offset=None, parent=None):
         self.modname = fromname
         self.names = names
         self.level = level
@@ -661,8 +659,7 @@ class List(BaseContainer):
 
     _other_fields = ('ctx',)
 
-    def __init__(self, ctx=None, lineno=None,
-                 col_offset=None, parent=None):
+    def __init__(self, ctx=None, lineno=None, col_offset=None, parent=None):
         self.ctx = ctx
         super(List, self).__init__(lineno, col_offset, parent)
 
@@ -739,8 +736,7 @@ class Starred(base.BaseNode):
 
     def __init__(self, ctx=None, lineno=None, col_offset=None, parent=None):
         self.ctx = ctx
-        super(Starred, self).__init__(lineno=lineno,
-                                      col_offset=col_offset, parent=parent)
+        super(Starred, self).__init__(lineno=lineno, col_offset=col_offset, parent=parent)
 
     def postinit(self, value=base.Empty):
         self.value = value
@@ -755,8 +751,7 @@ class Subscript(base.BaseNode):
 
     def __init__(self, ctx=None, lineno=None, col_offset=None, parent=None):
         self.ctx = ctx
-        super(Subscript, self).__init__(lineno=lineno,
-                                        col_offset=col_offset, parent=parent)
+        super(Subscript, self).__init__(lineno=lineno, col_offset=col_offset, parent=parent)
 
     def postinit(self, value=base.Empty, slice=base.Empty):
         self.value = value
@@ -812,8 +807,7 @@ class Tuple(BaseContainer):
 
     _other_fields = ('ctx',)
 
-    def __init__(self, ctx=None, lineno=None,
-                 col_offset=None, parent=None):
+    def __init__(self, ctx=None, lineno=None, col_offset=None, parent=None):
         self.ctx = ctx
         super(Tuple, self).__init__(lineno, col_offset, parent)
 
@@ -916,8 +910,7 @@ class Module(base.BaseNode):
         _other_fields = ('name', 'doc', 'package', 'pure_python',
                          'source_code', 'source_file')
 
-    def __init__(self, name, doc, package=None, parent=None,
-                 pure_python=True, source_code=None, source_file=None):
+    def __init__(self, name, doc, package=None, pure_python=True, source_code=None, source_file=None, lineno=None, col_offset=None, parent=None):
         self.name = name
         self.doc = doc
         self.package = package
@@ -1037,25 +1030,26 @@ class ComprehensionScope(base.BaseNode):
     def frame(self):
         return self.parent.frame()
 
-
+# TODO: there's duplicated code here between list comps, set comps,
+# and generator expressions.
 class GeneratorExp(ComprehensionScope):
-    _astroid_fields = ('elt', 'generators')
+    _astroid_fields = ('generators', 'elt')
     elt = base.Empty
     generators = base.Empty
 
     def __init__(self, lineno=None, col_offset=None, parent=None):
         super(GeneratorExp, self).__init__(lineno, col_offset, parent)
 
-    def postinit(self, elt=base.Empty, generators=base.Empty):
-        self.elt = elt
+    def postinit(self, generators=base.Empty, elt=base.Empty):
         if generators is base.Empty:
             self.generators = []
         else:
             self.generators = generators
+        self.elt = elt
 
 
 class DictComp(ComprehensionScope):
-    _astroid_fields = ('key', 'value', 'generators')
+    _astroid_fields = ('generators', 'key', 'value')
     key = base.Empty
     value = base.Empty
     generators = base.Empty
@@ -1063,42 +1057,40 @@ class DictComp(ComprehensionScope):
     def __init__(self, lineno=None, col_offset=None, parent=None):
         super(DictComp, self).__init__(lineno, col_offset, parent)
 
-    def postinit(self, key=base.Empty, value=base.Empty, generators=base.Empty):
-        self.key = key
-        self.value = value
+    def postinit(self, generators=base.Empty, key=base.Empty, value=base.Empty):
         if generators is base.Empty:
             self.generators = []
         else:
             self.generators = generators
+        self.key = key
+        self.value = value
 
 
 class SetComp(ComprehensionScope):
-    _astroid_fields = ('elt', 'generators')
-    elt = None
-    generators = None
+    _astroid_fields = ('generators', 'elt')
     elt = base.Empty
     generators = base.Empty
 
     def __init__(self, lineno=None, col_offset=None, parent=None):
         super(SetComp, self).__init__(lineno, col_offset, parent)
 
-    def postinit(self, elt=base.Empty, generators=base.Empty):
-        self.elt = elt
+    def postinit(self, generators=base.Empty, elt=base.Empty):
         if generators is base.Empty:
             self.generators = []
         else:
             self.generators = generators
+        self.elt = elt
 
 
 class _ListComp(base.BaseNode):
 
-    _astroid_fields = ('elt', 'generators')
+    _astroid_fields = ('generators', 'elt')
     elt = base.Empty
     generators = base.Empty
 
-    def postinit(self, elt=base.Empty, generators=base.Empty):
-        self.elt = elt
+    def postinit(self, generators=base.Empty, elt=base.Empty):
         self.generators = generators
+        self.elt = elt
 
 
 if six.PY3:
@@ -1164,8 +1156,7 @@ class FunctionDef(LambdaFunctionMixin, Statement):
     _other_fields = ('name', 'doc')
     decorators = base.Empty
 
-    def __init__(self, name=None, doc=None, lineno=None,
-                 col_offset=None, parent=None):
+    def __init__(self, name=None, doc=None, lineno=None, col_offset=None, parent=None):
         self.name = name
         self.doc = doc
         super(FunctionDef, self).__init__(lineno, col_offset, parent)
@@ -1215,8 +1206,7 @@ class ClassDef(Statement):
     _other_fields = ('name', 'doc')
     decorators = base.Empty
 
-    def __init__(self, name=None, doc=None, lineno=None,
-                 col_offset=None, parent=None):
+    def __init__(self, name=None, doc=None, lineno=None, col_offset=None, parent=None):
         self.bases = []
         self.body = []
         self.name = name

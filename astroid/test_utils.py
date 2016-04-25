@@ -22,50 +22,21 @@ _STATEMENT_SELECTOR = '#@'
 def _extract_expressions(node):
     """Find expressions in a call to _TRANSIENT_FUNCTION and extract them.
 
-    The function walks the AST recursively to search for expressions that
-    are wrapped into a call to _TRANSIENT_FUNCTION. If it finds such an
-    expression, it completely removes the function call node from the tree,
-    replacing it by the wrapped expression inside the parent.
+    The function iterates over the AST to search for expressions that
+    are wrapped in a call to _TRANSIENT_FUNCTION, yielding any such
+    expressions.
 
     :param node: An astroid node.
-    :type node:  astroid.bases.NodeNG
+    :type node:  astroid.bases.BaseNode
     :yields: The sequence of wrapped expressions on the modified tree
     expression can be found.
+
     """
-    if (isinstance(node, nodes.Call)
-            and isinstance(node.func, nodes.Name)
-            and node.func.name == _TRANSIENT_FUNCTION):
-        real_expr = node.args[0]
-        # real_expr = node.down().right().down()
-        real_expr.parent = node.parent
-        # Search for node in all _astng_fields (the fields checked when
-        # get_children is called) of its parent. Some of those fields may
-        # be lists or tuples, in which case the elements need to be checked.
-        # When we find it, replace it by real_expr, so that the AST looks
-        # like no call to _TRANSIENT_FUNCTION ever took place.
-        for name in node.parent._astroid_fields:
-            child = getattr(node.parent, name)
-            if isinstance(child, (list, tuple)):
-                for idx, compound_child in enumerate(child):
-
-                    # Can't find a cleaner way to do this.
-                    if isinstance(compound_child, nodes.Parameter):
-                        if compound_child.default is node:
-                            child[idx].default = real_expr
-                        elif compound_child.annotation is node:
-                            child[idx].annotation = real_expr
-                        else:
-                            child[idx] = real_expr
-                    elif compound_child is node:
-                        child[idx] = real_expr
-
-            elif child is node:
-                setattr(node.parent, name, real_expr)
-        yield real_expr
-    else:
-        for child in node.get_children():
-            for result in _extract_expressions(child):
-                yield result
+    for child in node.preorder_descendants():
+        if (isinstance(child, nodes.Call)
+                and isinstance(child.func, nodes.Name)
+                and child.func.name == _TRANSIENT_FUNCTION):
+            yield child.down().right().down()
 
 
 def _find_statement_by_line(node, line):
@@ -158,7 +129,7 @@ def extract_node(code, module_name=''):
     """
     def _extract(node):
         if isinstance(node, nodes.Expr):
-            return node.value
+            return node.down()
         else:
             return node
 
@@ -173,11 +144,10 @@ def extract_node(code, module_name=''):
         for line in requested_lines:
             extracted.append(_find_statement_by_line(tree, line))
 
-    # Modifies the tree.
     extracted.extend(_extract_expressions(tree))
 
     if not extracted:
-        extracted.append(tree.body[-1])
+        extracted.append(tree.down().down())
 
     extracted = [_extract(node) for node in extracted]
     if len(extracted) == 1:

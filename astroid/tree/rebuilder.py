@@ -432,10 +432,10 @@ class TreeRebuilder(object):
     def visit_dictcomp(self, node, parent):
         """visit a DictComp node by returning a fresh instance of it"""
         newnode = nodes.DictComp(node.lineno, node.col_offset, parent)
-        newnode.postinit(self.visit(node.key, newnode),
-                         self.visit(node.value, newnode),
-                         [self.visit(child, newnode)
-                          for child in node.generators])
+        newnode.postinit([self.visit(child, newnode)
+                          for child in node.generators],
+                         self.visit(node.key, newnode),
+                         self.visit(node.value, newnode))
         return newnode
 
     def visit_expr(self, node, parent):
@@ -522,9 +522,9 @@ class TreeRebuilder(object):
     def visit_generatorexp(self, node, parent):
         """visit a GeneratorExp node by returning a fresh instance of it"""
         newnode = nodes.GeneratorExp(node.lineno, node.col_offset, parent)
-        newnode.postinit(self.visit(node.elt, newnode),
-                         [self.visit(child, newnode)
-                          for child in node.generators])
+        newnode.postinit([self.visit(child, newnode)
+                          for child in node.generators],
+                         self.visit(node.elt, newnode))
         return newnode
 
     def visit_attribute(self, node, parent):
@@ -611,9 +611,9 @@ class TreeRebuilder(object):
     def visit_listcomp(self, node, parent):
         """visit a ListComp node by returning a fresh instance of it"""
         newnode = nodes.ListComp(node.lineno, node.col_offset, parent)
-        newnode.postinit(self.visit(node.elt, newnode),
-                         [self.visit(child, newnode)
-                          for child in node.generators])
+        newnode.postinit([self.visit(child, newnode)
+                          for child in node.generators],
+                         self.visit(node.elt, newnode))
         return newnode
 
     def visit_name(self, node, parent):
@@ -685,9 +685,9 @@ class TreeRebuilder(object):
     def visit_setcomp(self, node, parent):
         """visit a SetComp node by returning a fresh instance of it"""
         newnode = nodes.SetComp(node.lineno, node.col_offset, parent)
-        newnode.postinit(self.visit(node.elt, newnode),
-                         [self.visit(child, newnode)
-                          for child in node.generators])
+        newnode.postinit([self.visit(child, newnode)
+                          for child in node.generators],
+                         self.visit(node.elt, newnode))
         return newnode
 
     def visit_slice(self, node, parent):

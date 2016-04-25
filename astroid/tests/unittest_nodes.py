@@ -470,11 +470,10 @@ class Python35AsyncTest(unittest.TestCase):
 class ScopeTest(unittest.TestCase):
 
     def test_decorators(self):
-        ast_node = test_utils.extract_node('''
-        @test
+        decorators = test_utils.extract_node('''
+        @test #@
         def foo(): pass
         ''')
-        decorators = ast_node.decorators
         self.assertIsInstance(decorators.scope(), nodes.Module)
         self.assertEqual(decorators.scope(), decorators.root())
 
@@ -509,7 +508,7 @@ class ScopeTest(unittest.TestCase):
         ast_node = test_utils.extract_node('''
         [i for data in __([DATA1, DATA2]) for i in data]
         ''')
-        node = ast_node.elts[0]
+        node = ast_node.down().down()
         scope = node.scope()
         self.assertIsInstance(scope, nodes.Module)
 
@@ -528,7 +527,8 @@ class ScopeTest(unittest.TestCase):
         [1 for data in DATA]
         ''')
         # target is `data` from the list comprehension
-        target = ast_node.generators[0].target
+        # target = ast_node.generators[0].target
+        target = ast_node.down().down().down()
         scope = target.scope()
         if six.PY2:
             self.assertIsInstance(scope, nodes.Module)
@@ -557,7 +557,7 @@ class ScopeTest(unittest.TestCase):
 
         ast_node = test_utils.extract_node('''
         {i:1 for i in DATA}''')
-        target = ast_node.generators[0].target
+        target = ast_node.down().down().down()
         target_scope = target.scope()
         self.assertIsInstance(target_scope, nodes.DictComp)
 

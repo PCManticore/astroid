@@ -61,8 +61,17 @@ def _scope_by_argument_parent(parent, node):
 def _scope_by_function_parent(parent, node):
     # Verify if the node is the return annotation of a function,
     # in which case the scope is the parent scope of the function.
-    if six.PY3 and node is parent.returns:
+    if six.PY3 and node == parent.returns:
         return parent.parent.scope()
+
+
+@_scope_by_parent.register(node_classes.Parameter)
+def _scope_by_parameter_parent(parent, node):
+    # Defaults and annotations are scoped outside the function.
+    if node == parent.default:
+        return parent.parent.parent.parent.scope()
+    if node == parent.annotation:
+        return parent.parent.parent.parent.scope()
 
 
 @_scope_by_parent.register(node_classes.Comprehension)
@@ -77,11 +86,11 @@ def _scope_by_comprehension_parent(parent, node):
     # variables on Python 2 and 3.
 
     comprehension = parent_scope = parent.parent
-    generators = comprehension.generators
+    generators = comprehension.down()
 
     # The first outer generator always has a different scope
-    first_iter = generators[0].iter
-    if node is first_iter:
+    first_iter = generators.down().down().right()
+    if node == first_iter:
         return parent_scope.parent.scope()
 
     # This might not be correct for all the cases, but it
