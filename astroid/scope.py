@@ -151,3 +151,14 @@ def assign_type(node):
 def _parent_assign_type(node):
     '''Get the assign type of the parent instead.'''
     return assign_type(node.parent)
+
+
+def qname(node):
+    """Return the 'qualified' name of the node."""
+    if not isinstance(node, (node_classes.ClassDef,
+                             node_classes.Module,
+                             node_classes.LambdaFunctionMixin)):
+        raise TypeError('This node has no qualified name.')
+    if not node.parent:
+        return node.name
+    return '%s.%s' % (qname(node.parent.frame()), node.name)

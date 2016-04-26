@@ -31,6 +31,7 @@ from astroid import builder
 from astroid import exceptions
 from astroid import nodes
 from astroid import parse
+from astroid import scope
 from astroid import test_utils
 from astroid.tests import resources
 
@@ -780,7 +781,7 @@ class FunctionNodeTest(unittest.TestCase):
         astroid = builder.parse('lmbd = lambda: None', __name__)
         lmbd = astroid.down().down().down().down()
         self.assertEqual('%s.<lambda>' % __name__,
-                         lmbd.parent.down().right().qname())
+                         scope.qname(lmbd.parent.down().right()))
 
     def test_argnames(self):
         if sys.version_info < (3, 0):

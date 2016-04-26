@@ -15,7 +15,6 @@ import wrapt
 
 from astroid import scope
 from astroid import base
-# from astroid import treeabc
 from astroid import node_classes
 
 
@@ -388,16 +387,6 @@ class Zipper(wrapt.ObjectProxy):
 
     def nodes_of_class(self, cls, skip_class=None):
         return self.find_descendants_of_type(cls, skip_class)
-
-    def qname(self):
-        """Return the 'qualified' name of the node."""
-        if not isinstance(self, (node_classes.ClassDef,
-                                 node_classes.Module,
-                                 node_classes.LambdaFunctionMixin)):
-            raise TypeError('This node has no qualified name.')
-        if not self._self_path:
-            return self.name
-        return '%s.%s' % (self.parent.frame().qname(), self.name)
 
     def frame(self):
         '''Go to the first ancestor of the focus that creates a new frame.
