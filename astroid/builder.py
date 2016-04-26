@@ -26,8 +26,8 @@ import os
 import textwrap
 
 from astroid import exceptions
-from astroid.tree import rebuilder
-from astroid.tree import zipper
+from astroid import rebuilder
+from astroid import zipper
 from astroid import util
 
 

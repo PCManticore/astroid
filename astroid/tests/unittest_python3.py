@@ -21,7 +21,7 @@ import unittest
 from astroid import builder
 from astroid import nodes
 from astroid import scope
-from astroid.tree.node_classes import (Assign, Expr, YieldFrom, Name,
+from astroid.node_classes import (Assign, Expr, YieldFrom, Name,
                                        Const, ClassDef, FunctionDef)
 from astroid import test_utils
 

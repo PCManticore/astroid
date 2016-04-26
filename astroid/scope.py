@@ -22,7 +22,7 @@ import itertools
 
 import six
 
-from astroid.tree import node_classes
+from astroid import node_classes
 from astroid import util
 
 

@@ -15,8 +15,8 @@ from hypothesis import strategies
 
 import astroid
 from astroid import nodes
-from astroid.tree import base
-from astroid.tree import zipper
+from astroid import base
+from astroid import zipper
 
 
 # This is a strategy that generates a random file name, screening out

@@ -14,9 +14,9 @@ import collections
 import wrapt
 
 from astroid import scope
-from astroid.tree import base
-# from astroid.tree import treeabc
-from astroid.tree import node_classes
+from astroid import base
+# from astroid import treeabc
+from astroid import node_classes
 
 
 # The following are helper functions for working with singly-linked

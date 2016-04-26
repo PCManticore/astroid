@@ -322,7 +322,7 @@ class ImportNodeTest(unittest.TestCase):
         ast = self.nodes['modutils']
         self.assertEqual(ast.as_string(), "from astroid import modutils")
         ast = self.nodes['NameNode']
-        self.assertEqual(ast.as_string(), "from astroid.tree.node_classes import Name as NameNode")
+        self.assertEqual(ast.as_string(), "from astroid.node_classes import Name as NameNode")
         ast = self.nodes['os.path']
         self.assertEqual(ast.as_string(), "import os.path")
         code = """from . import here

@@ -68,4 +68,4 @@ from astroid.nodes import *
 from astroid.builder import parse
 
 # TODO
-# from astroid.tree import zipper
+# from astroid import zipper
