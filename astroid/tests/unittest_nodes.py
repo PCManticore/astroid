@@ -728,18 +728,14 @@ class FunctionNodeTest(unittest.TestCase):
         global_access = self.nodes['global_access']
         self.assertEqual(global_access.statement(), global_access)
         l_sibling = global_access.previous_sibling()
-        # check taking parent if child is not a stmt
         self.assertIsInstance(l_sibling, nodes.Assign)
-        child = global_access.args.args[0]
-        self.assertEqual(l_sibling, child.previous_sibling())
         r_sibling = global_access.next_sibling()
         self.assertIsInstance(r_sibling, nodes.ClassDef)
         self.assertEqual(r_sibling.name, 'YO')
-        self.assertEqual(r_sibling, child.next_sibling())
         last = r_sibling.next_sibling().next_sibling().next_sibling()
         self.assertIsInstance(last, nodes.Assign)
         self.assertIsNone(last.next_sibling())
-        first = l_sibling.root().body[0]
+        first = l_sibling.root().down().down()
         self.assertIsNone(first.previous_sibling())
 
     def test_nested_args(self):

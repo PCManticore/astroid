@@ -125,138 +125,26 @@ class BaseNode(object):
         func = getattr(visitor, "visit_" + self.__class__.__name__.lower())
         return func(self)
 
-    def get_children(self):
-        for field in self._astroid_fields:
-            attr = getattr(self, field)
-            if attr is None:
-                continue
-            if isinstance(attr, (list, tuple)):
-                for elt in attr:
-                    yield elt
-            else:
-                yield attr
-
-    def last_child(self):
-        """an optimized version of list(get_children())[-1]"""
-        for field in self._astroid_fields[::-1]:
-            attr = getattr(self, field)
-            if not attr: # None or empty listy / tuple
-                continue
-            if isinstance(attr, (list, tuple)):
-                return attr[-1]
-            else:
-                return attr
-        return None
-
-    def parent_of(self, node):
-        """return true if i'm a parent of the given node"""
-        parent = node.parent
-        while parent is not None:
-            if self is parent:
-                return True
-            parent = parent.parent
-        return False
-
-    def statement(self):
-        """return the first parent node marked as statement node"""
-        if self.is_statement:
-            return self
-        return self.parent.statement()
-
-    def frame(self):
-        """return the first parent frame node (i.e. Module, FunctionDef or
-        ClassDef)
-
-        """
-        return self.parent.frame()
-
-    def scope(self):
-        """Get the first node defining a new scope
-
-        Scopes are introduced in Python by Module, FunctionDef, ClassDef,
-        Lambda, GenExpr and on Python 3, by comprehensions.
-        """
-        return scope.node_scope(self)
-
-    def root(self):
-        """return the root node of the tree, (i.e. a Module)"""
-        if self.parent:
-            return self.parent.root()
-        return self
-
-    def child_sequence(self, child):
-        """search for the right sequence where the child lies in"""
-        for field in self._astroid_fields:
-            node_or_sequence = getattr(self, field)
-            if node_or_sequence is child:
-                return [node_or_sequence]
-            # /!\ compiler.ast Nodes have an __iter__ walking over child nodes
-            if (isinstance(node_or_sequence, (tuple, list))
-                    and child in node_or_sequence):
-                return node_or_sequence
-
-        msg = 'Could not find %s in %s\'s children'
-        raise exceptions.AstroidError(msg % (repr(child), repr(self)))
-
-    def locate_child(self, child):
-        """return a 2-uple (child attribute name, sequence or node)"""
-        for field in self._astroid_fields:
-            node_or_sequence = getattr(self, field)
-            # /!\ compiler.ast Nodes have an __iter__ walking over child nodes
-            if child is node_or_sequence:
-                return field, child
-            if isinstance(node_or_sequence, (tuple, list)) and child in node_or_sequence:
-                return field, node_or_sequence
-        msg = 'Could not find %s in %s\'s children'
-        raise exceptions.AstroidError(msg % (repr(child), repr(self)))
-    # FIXME : should we merge child_sequence and locate_child ? locate_child
-    # is only used in are_exclusive, child_sequence one time in pylint.
-
-    def next_sibling(self):
-        """return the next sibling statement"""
-        return self.parent.next_sibling()
-
-    def previous_sibling(self):
-        """return the previous sibling statement"""
-        return self.parent.previous_sibling()
-
-    # these are lazy because they're relatively expensive to compute for every
-    # single node, and they rarely get looked at
-
     @property
     def fromlineno(self):
         return self.lineno
 
     @property
     def tolineno(self):
-        if not self._astroid_fields:
-            # can't have children
-            lastchild = None
-        else:
-            lastchild = self.last_child()
-        if lastchild is None:
-            return self.fromlineno
-        else:
-            return lastchild.tolineno
+        last_child = self
+        while last_child:
+            for child in reversed(tuple(last_child)):
+                if child:
+                    last_child = child
+                    break
+            else:
+                break
+        return last_child.lineno
 
     def block_range(self, lineno):
         """handle block line numbers range for non block opening statements
         """
         return lineno, self.tolineno
-
-    def nodes_of_class(self, klass, skip_klass=None):
-        """return an iterator on nodes which are instance of the given class(es)
-
-        klass may be a class object or a tuple of class objects
-        """
-        if isinstance(self, klass):
-            yield self
-        for child_node in self.get_children():
-            if skip_klass is not None and isinstance(child_node, skip_klass):
-                continue
-            for matching in child_node.nodes_of_class(klass, skip_klass):
-                yield matching
-
 
     def as_string(self):
         return as_string.to_code(self)

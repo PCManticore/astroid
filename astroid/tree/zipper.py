@@ -448,10 +448,10 @@ class Zipper(wrapt.ObjectProxy):
         This takes time linear in the number of ancestors of the focus.
         '''
         location = self
-        while (location is not None and
-               not isinstance(location.__wrapped__,
-                              (node_classes.FunctionDef, node_classes.Lambda,
-                               node_classes.ClassDef, node_classes.Module))):
+        while (location is not None and not
+               isinstance(location.__wrapped__,
+                          (node_classes.FunctionDef, node_classes.Lambda,
+                           node_classes.ClassDef, node_classes.Module))):
             location = location.up()
         return location
 

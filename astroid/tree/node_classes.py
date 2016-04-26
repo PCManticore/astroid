@@ -48,24 +48,6 @@ class Statement(base.BaseNode):
     """Statement node adding a few attributes"""
     is_statement = True
 
-    # TODO: is this equivalent to zipper's next/previous sibling?
-    def next_sibling(self):
-        """return the next sibling statement"""
-        stmts = self.parent.child_sequence(self)
-        index = stmts.index(self)
-        try:
-            return stmts[index + 1]
-        except IndexError:
-            pass
-
-    def previous_sibling(self):
-        """return the previous sibling statement"""
-        stmts = self.parent.child_sequence(self)
-        index = stmts.index(self)
-        if index >= 1:
-            return stmts[index - 1]
-
-
 
 class BaseAssignName(base.BaseNode):
     _other_fields = ('name',)
@@ -211,13 +193,6 @@ class Arguments(base.BaseNode):
             return _find_arg(argname, self.positional_and_keyword, rec)
         return None, None
 
-    def get_children(self):
-        """override get_children to skip over None elements in kw_defaults"""
-        for child in super(Arguments, self).get_children():
-            if child is not None:
-                yield child
-
-
 
 class AssignAttr(base.BaseNode):
 
@@ -353,14 +328,6 @@ class Compare(base.BaseNode):
         self.left = left
         self.comparators = comparators
 
-    def get_children(self):
-        yield self.left
-        for comparator in self.comparators:
-            yield comparator
-
-    def last_child(self):
-        return self.comparators[-1]
-
 
 class Comprehension(base.BaseNode):
 
@@ -443,19 +410,6 @@ class Dict(base.BaseNode):
     @property
     def items(self):
         return list(zip(self.keys, self.values))
-
-    def get_children(self):
-        """get children of a Dict node"""
-        # overrides get_children
-        for key, value in zip(self.keys, self.values):
-            yield key
-            yield value
-
-    def last_child(self):
-        """override last_child"""
-        if self.values:
-            return self.values[-1]
-        return None
 
 
 class Expr(Statement):
@@ -973,20 +927,6 @@ class Module(base.BaseNode):
         """
         return self.file is not None and self.file.endswith('.py')
 
-    def statement(self):
-        """return the first parent node marked as statement node
-        consider a module as a statement...
-        """
-        return self
-
-    def previous_sibling(self):
-        """module has no sibling"""
-        return
-
-    def next_sibling(self):
-        """module has no sibling"""
-        return
-
     if six.PY2:
         def _absolute_import_activated(self):
             return 'absolute_import' in self.future_imports
@@ -1025,20 +965,10 @@ class Module(base.BaseNode):
         return modname
 
 
-class ComprehensionScope(base.BaseNode):
-
-    def frame(self):
-        return self.parent.frame()
-
-# TODO: there's duplicated code here between list comps, set comps,
-# and generator expressions.
-class GeneratorExp(ComprehensionScope):
+class BaseComprehension(base.BaseNode):
     _astroid_fields = ('generators', 'elt')
     elt = base.Empty
     generators = base.Empty
-
-    def __init__(self, lineno=None, col_offset=None, parent=None):
-        super(GeneratorExp, self).__init__(lineno, col_offset, parent)
 
     def postinit(self, generators=base.Empty, elt=base.Empty):
         if generators is base.Empty:
@@ -1048,14 +978,14 @@ class GeneratorExp(ComprehensionScope):
         self.elt = elt
 
 
-class DictComp(ComprehensionScope):
+class GeneratorExp(BaseComprehension):
+    pass
+
+
+class DictComp(BaseComprehension):
     _astroid_fields = ('generators', 'key', 'value')
     key = base.Empty
     value = base.Empty
-    generators = base.Empty
-
-    def __init__(self, lineno=None, col_offset=None, parent=None):
-        super(DictComp, self).__init__(lineno, col_offset, parent)
 
     def postinit(self, generators=base.Empty, key=base.Empty, value=base.Empty):
         if generators is base.Empty:
@@ -1066,24 +996,11 @@ class DictComp(ComprehensionScope):
         self.value = value
 
 
-class SetComp(ComprehensionScope):
-    _astroid_fields = ('generators', 'elt')
-    elt = base.Empty
-    generators = base.Empty
-
-    def __init__(self, lineno=None, col_offset=None, parent=None):
-        super(SetComp, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, generators=base.Empty, elt=base.Empty):
-        if generators is base.Empty:
-            self.generators = []
-        else:
-            self.generators = generators
-        self.elt = elt
+class SetComp(BaseComprehension):
+    pass
 
 
 class _ListComp(base.BaseNode):
-
     _astroid_fields = ('generators', 'elt')
     elt = base.Empty
     generators = base.Empty
@@ -1092,14 +1009,9 @@ class _ListComp(base.BaseNode):
         self.generators = generators
         self.elt = elt
 
-
 if six.PY3:
-    class ListComp(_ListComp, ComprehensionScope):
-
-        # _other_other_fields = ('locals',)
-
-        def __init__(self, lineno=None, col_offset=None, parent=None):
-            super(ListComp, self).__init__(lineno, col_offset, parent)
+    class ListComp(_ListComp, BaseComprehension):
+        pass
 else:
     class ListComp(_ListComp):
         pass
@@ -1191,9 +1103,15 @@ class FunctionDef(LambdaFunctionMixin, Statement):
 
     def is_generator(self):
         """return true if this is a generator function"""
-        yield_nodes = (Yield, YieldFrom)
-        return next(self.nodes_of_class(yield_nodes,
-                                        skip_klass=(FunctionDef, Lambda)), False)
+        to_visit = list(self)
+        to_visit.reverse()
+        while to_visit:
+            descendant = to_visit.pop()
+            if isinstance(descendant, (Yield, YieldFrom)):
+                return True
+            if not isinstance(descendant, (FunctionDef, Lambda)):
+                to_visit.extend(reversed(tuple(descendant)))
+        return False
 
 
 class AsyncFunctionDef(FunctionDef):
