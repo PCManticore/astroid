@@ -262,7 +262,6 @@ class Zipper(wrapt.ObjectProxy):
             # nodes in different parts of an AST.  Empty nodes can
             # never be ancestors, so they can be safely skipped.
             if self_ancestor is other_ancestor and self_ancestor is not base.Empty:
-            # not isinstance(self_ancestor, base.Empty):
                 ancestor = self_ancestor
             else:
                 break
@@ -340,17 +339,6 @@ class Zipper(wrapt.ObjectProxy):
                 descendants of those nodes.
         '''
         return (d for d in self.preorder_descendants(skip_class) if isinstance(d, cls))
-        # if isinstance(self, cls):
-        #     yield self
-        # child = self.down()
-        # while child:
-        #     if skip_class is not None and isinstance(location, skip_class):
-        #         continue
-        #     for matching in child.nodes_of_class(cls, skip_class):
-        #         yield matching
-        #     child = child.right()
-        #     if isinstance(child, collections.Sequence):
-        #         child = child.down()
 
     # Editing
     def replace(self, focus):
@@ -400,37 +388,6 @@ class Zipper(wrapt.ObjectProxy):
 
     def nodes_of_class(self, cls, skip_class=None):
         return self.find_descendants_of_type(cls, skip_class)
-
-    # def child_sequence(self, child):
-    #     return self.locate_child(child)[1]
-
-    # def child_sequence(self, child):
-    #     """search for the right sequence where the child lies in"""
-    #     location = self.down()
-    #     while location:
-    #         if location is child:
-    #             return location
-    #         if (isinstance(location, collections.Sequence)
-    #             and child in location):
-    #             return location
-    #     msg = 'Could not find %s in %s\'s children'
-    #     raise exceptions.AstroidError(msg % (repr(child), repr(self)))
-
-    # def locate_child(self, child):
-    #     """return a 2-uple (child attribute name, sequence or node)"""
-    #     location = self.down()
-    #     index = 0
-    #     while location:
-    #         if location is child:
-    #             return self._astroid_fields[index], location
-    #         if (isinstance(location, collections.Sequence)
-    #             and child in location):
-    #             return self._astroid_fields[index], location
-    #         index += 1
-    #     msg = 'Could not find %s in %s\'s children'
-    #     raise exceptions.AstroidError(msg % (repr(child), repr(self)))
-    # # FIXME : should we merge child_sequence and locate_child ? locate_child
-    # # is only used in are_exclusive, child_sequence one time in pylint.
 
     def qname(self):
         """Return the 'qualified' name of the node."""
