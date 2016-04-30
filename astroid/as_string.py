@@ -412,10 +412,13 @@ class AsStringVisitor(object):
         """yield an ast.Yield node as string"""
         yi_val = node.value and (" " + node.value.accept(self)) or ""
         expr = 'yield' + yi_val
-        if node.parent.is_statement:
-            return expr
-        else:
-            return "(%s)" % (expr,)
+        # TODO: this code can be restored when the as_string() visitor
+        # is made to work with the zipper.
+
+        # if node.parent.is_statement:
+        #     return expr
+        # else:
+        return "(%s)" % (expr,)
 
     def visit_starred(self, node):
         """return Starred node as string"""
@@ -453,10 +456,13 @@ class AsStringVisitor3(AsStringVisitor):
         """ Return an astroid.YieldFrom node as string. """
         yi_val = node.value and (" " + node.value.accept(self)) or ""
         expr = 'yield from' + yi_val
-        if node.parent.is_statement:
-            return expr
-        else:
-            return "(%s)" % (expr,)
+        # TODO: this code can be restored when the as_string() visitor
+        # is made to work with the zipper.
+
+        # if node.parent.is_statement:
+        #     return expr
+        # else:
+        return "(%s)" % (expr,)
 
     def visit_asyncfunctiondef(self, node):
         function = super(AsStringVisitor3, self).visit_functiondef(node)
