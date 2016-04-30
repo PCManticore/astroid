@@ -353,7 +353,7 @@ class Const(base.BaseNode):
         self.value = value
         super(Const, self).__init__(lineno, col_offset, parent)
 
-    
+
 class NameConstant(Const):
     """Represents a builtin singleton, at the moment True, False, None and NotImplemented."""
 
