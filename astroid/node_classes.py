@@ -970,26 +970,22 @@ class SetComp(BaseComprehension):
 
 
 class _ListComp(base.BaseNode):
-    _astroid_fields = ('generators', 'elt')
-    elt = base.Empty
-    generators = base.Empty
-
-    def __init__(self, generators, elt, lineno=None, col_offset=None):
-        self.generators = generators
-        self.elt = elt
-        # TODO: figure out a better solution here to inheritance for ListComp.
-
-        # super(_ListComp, self).__init__(lineno, col_offset)
-        self.lineno = lineno
-        self.col_offset = col_offset
-
+    pass
 
 if six.PY3:
     class ListComp(_ListComp, BaseComprehension):
         pass
 else:
     class ListComp(_ListComp):
-        pass
+        _astroid_fields = ('generators', 'elt')
+        elt = base.Empty
+        generators = base.Empty
+
+        # TODO: this still duplicates code in base comprehension.
+        def __init__(self, generators, elt, lineno=None, col_offset=None):
+            self.generators = generators
+            self.elt = elt
+            super(_ListComp, self).__init__(lineno, col_offset)
 
 
 class LambdaFunctionMixin(base.BaseNode):
