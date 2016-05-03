@@ -183,7 +183,6 @@ class AssignAttr(base.BaseNode):
 
     _astroid_fields = ('expr',)
     _other_fields = ('attrname',)
-    expr = base.Empty
 
     def __init__(self, attrname, expr, lineno=None, col_offset=None):
         self.attrname = attrname
@@ -194,8 +193,6 @@ class AssignAttr(base.BaseNode):
 class Assert(Statement):
 
     _astroid_fields = ('test', 'fail',)
-    test = base.Empty
-    fail = base.Empty
 
     def __init__(self, test, fail, lineno=None, col_offset=None):
         self.test = test
@@ -206,8 +203,6 @@ class Assert(Statement):
 class Assign(Statement):
 
     _astroid_fields = ('targets', 'value',)
-    targets = base.Empty
-    value = base.Empty
 
     def __init__(self, targets, value, lineno=None, col_offset=None):
         self.targets = targets
@@ -219,8 +214,6 @@ class AugAssign(Statement):
 
     _astroid_fields = ('target', 'value')
     _other_fields = ('op',)
-    target = base.Empty
-    value = base.Empty
 
     def __init__(self, op, target, value, lineno=None, col_offset=None):
         self.op = op
@@ -232,7 +225,6 @@ class AugAssign(Statement):
 class Repr(base.BaseNode):
 
     _astroid_fields = ('value',)
-    value = base.Empty
 
     def __init__(self, value, lineno=None, col_offset=None):
         self.value = value
@@ -243,8 +235,6 @@ class BinOp(base.BaseNode):
 
     _astroid_fields = ('left', 'right')
     _other_fields = ('op',)
-    left = base.Empty
-    right = base.Empty
 
     def __init__(self, op, left, right, lineno=None, col_offset=None):
         self.op = op
@@ -257,7 +247,6 @@ class BoolOp(base.BaseNode):
 
     _astroid_fields = ('values',)
     _other_fields = ('op',)
-    values = base.Empty
 
     def __init__(self, op, values, lineno=None, col_offset=None):
         self.op = op
@@ -272,9 +261,6 @@ class Break(Statement):
 class Call(base.BaseNode):
 
     _astroid_fields = ('func', 'args', 'keywords')
-    func = base.Empty
-    args = base.Empty
-    keywords = base.Empty
 
     def __init__(self, func, args, keywords, lineno=None, col_offset=None):
         self.func = func
@@ -297,8 +283,6 @@ class Compare(base.BaseNode):
 
     _astroid_fields = ('left', 'comparators')
     _other_fields = ('ops',)
-    left = base.Empty
-    comparators = base.Empty
 
     def __init__(self, ops, left, comparators, lineno=None, col_offset=None):
         self.ops = ops
@@ -310,9 +294,6 @@ class Compare(base.BaseNode):
 class Comprehension(base.BaseNode):
 
     _astroid_fields = ('target', 'iter', 'ifs')
-    target = base.Empty
-    iter = base.Empty
-    ifs = base.Empty
 
     def __init__(self, target, iter, ifs):
         self.target = target
@@ -339,7 +320,6 @@ class Continue(Statement):
 class Decorators(base.BaseNode):
 
     _astroid_fields = ('nodes',)
-    nodes = base.Empty
 
     def __init__(self, nodes, lineno=None, col_offset=None):
         self.nodes = nodes
@@ -350,7 +330,6 @@ class DelAttr(base.BaseNode):
 
     _astroid_fields = ('expr',)
     _other_fields = ('attrname',)
-    expr = base.Empty
 
     def __init__(self, attrname, expr, lineno=None, col_offset=None):
         self.attrname = attrname
@@ -361,7 +340,6 @@ class DelAttr(base.BaseNode):
 class Delete(Statement):
 
     _astroid_fields = ('targets',)
-    targets = base.Empty
 
     def __init__(self, targets, lineno=None, col_offset=None):
         self.targets = targets
@@ -385,7 +363,6 @@ class Dict(base.BaseNode):
 class Expr(Statement):
 
     _astroid_fields = ('value',)
-    value = base.Empty
 
     def __init__(self, value, lineno=None, col_offset=None):
         self.value = value
@@ -399,9 +376,6 @@ class Ellipsis(base.BaseNode): # pylint: disable=redefined-builtin
 class ExceptHandler(Statement):
 
     _astroid_fields = ('type', 'name', 'body',)
-    type = base.Empty
-    name = base.Empty
-    body = base.Empty
 
     def __init__(self, type, name, body, lineno=None, col_offset=None):
         self.type = type
@@ -422,9 +396,6 @@ class ExceptHandler(Statement):
 class Exec(Statement):
 
     _astroid_fields = ('expr', 'globals', 'locals')
-    expr = base.Empty
-    globals = base.Empty
-    locals = base.Empty
 
     def __init__(self, expr, globals, locals, lineno=None, col_offset=None):
         self.expr = expr
@@ -436,7 +407,6 @@ class Exec(Statement):
 class ExtSlice(base.BaseNode):
 
     _astroid_fields = ('dims',)
-    dims = base.Empty
 
     def __init__(self, dims, lineno=None, col_offset=None):
         self.dims = dims
@@ -446,10 +416,6 @@ class ExtSlice(base.BaseNode):
 class For(base.BlockRangeMixIn, Statement):
 
     _astroid_fields = ('target', 'iter', 'body', 'orelse',)
-    target = base.Empty
-    iter = base.Empty
-    body = base.Empty
-    orelse = base.Empty
 
     def __init__(self, target, iter, body, orelse, lineno=None, col_offset=None):
         self.target = target
@@ -473,7 +439,6 @@ class Await(base.BaseNode):
     """Await node for the `await` keyword."""
 
     _astroid_fields = ('value', )
-    value = base.Empty
 
     def __init__(self, value, lineno=None, col_offset=None):
         self.value = value
@@ -495,7 +460,6 @@ class Attribute(base.BaseNode):
 
     _astroid_fields = ('expr',)
     _other_fields = ('attrname',)
-    expr = base.Empty
 
     def __init__(self, attrname, expr, lineno=None, col_offset=None):
         self.attrname = attrname
@@ -515,9 +479,6 @@ class Global(Statement):
 class If(base.BlockRangeMixIn, Statement):
 
     _astroid_fields = ('test', 'body', 'orelse')
-    test = base.Empty
-    body = base.Empty
-    orelse = base.Empty
 
     def __init__(self, test, body, orelse, lineno=None, col_offset=None):
         self.test = test
@@ -542,9 +503,6 @@ class If(base.BlockRangeMixIn, Statement):
 class IfExp(base.BaseNode):
 
     _astroid_fields = ('test', 'body', 'orelse')
-    test = base.Empty
-    body = base.Empty
-    orelse = base.Empty
 
     def __init__(self, test, body, orelse, lineno=None, col_offset=None):
         self.test = test
@@ -565,7 +523,6 @@ class Import(Statement):
 class Index(base.BaseNode):
 
     _astroid_fields = ('value',)
-    value = base.Empty
 
     def __init__(self, value, lineno=None, col_offset=None):
         self.value = value
@@ -576,7 +533,6 @@ class Keyword(base.BaseNode):
 
     _astroid_fields = ('value',)
     _other_fields = ('arg',)
-    value = base.Empty
 
     def __init__(self, arg, value, lineno=None, col_offset=None):
         self.arg = arg
@@ -610,8 +566,6 @@ class Print(Statement):
 
     _astroid_fields = ('dest', 'values')
     _other_fields = ('nl',)
-    dest = base.Empty
-    values = base.Empty
 
     def __init__(self, nl, dest, values, lineno=None, col_offset=None):
         self.nl = nl
@@ -634,7 +588,6 @@ class Raise(Statement):
 class Return(Statement):
 
     _astroid_fields = ('value',)
-    value = base.Empty
 
     def __init__(self, value, lineno=None, col_offset=None):
         self.value = value
@@ -648,9 +601,6 @@ class Set(BaseContainer):
 class Slice(base.BaseNode):
 
     _astroid_fields = ('lower', 'upper', 'step')
-    lower = base.Empty
-    upper = base.Empty
-    step = base.Empty
 
     def __init__(self, lower, upper, step, lineno=None, col_offset=None):
         self.lower = lower
@@ -663,7 +613,6 @@ class Starred(base.BaseNode):
 
     _astroid_fields = ('value',)
     _other_fields = ('ctx', )
-    value = base.Empty
 
     def __init__(self, ctx, value, lineno=None, col_offset=None):
         self.ctx = ctx
@@ -675,8 +624,6 @@ class Subscript(base.BaseNode):
 
     _astroid_fields = ('value', 'slice')
     _other_fields = ('ctx', )
-    value = base.Empty
-    slice = base.Empty
 
     def __init__(self, ctx, value, slice, lineno=None, col_offset=None):
         self.ctx = ctx
@@ -688,9 +635,6 @@ class Subscript(base.BaseNode):
 class TryExcept(base.BlockRangeMixIn, Statement):
 
     _astroid_fields = ('body', 'handlers', 'orelse',)
-    body = base.Empty
-    handlers = base.Empty
-    orelse = base.Empty
 
     def __init__(self, body, handlers, orelse, lineno=None, col_offset=None):
         self.body = body
@@ -714,8 +658,6 @@ class TryExcept(base.BlockRangeMixIn, Statement):
 class TryFinally(base.BlockRangeMixIn, Statement):
 
     _astroid_fields = ('body', 'finalbody',)
-    body = base.Empty
-    finalbody = base.Empty
 
     def __init__(self, body, finalbody, lineno=None, col_offset=None):
         self.body = body
@@ -745,7 +687,6 @@ class UnaryOp(base.BaseNode):
 
     _astroid_fields = ('operand',)
     _other_fields = ('op',)
-    operand = base.Empty
 
     def __init__(self, op, operand, lineno=None, col_offset=None):
         self.op = op
@@ -756,9 +697,6 @@ class UnaryOp(base.BaseNode):
 class While(base.BlockRangeMixIn, Statement):
 
     _astroid_fields = ('test', 'body', 'orelse',)
-    test = base.Empty
-    body = base.Empty
-    orelse = base.Empty
 
     def __init__(self, test, body, orelse, lineno=None, col_offset=None):
         self.test = test
@@ -791,8 +729,6 @@ class With(base.BlockRangeMixIn, Statement):
 
 class WithItem(base.BaseNode):
     _astroid_fields = ('context_expr', 'optional_vars')
-    context_expr = base.Empty
-    optional_vars = base.Empty
 
     def __init__(self, context_expr, optional_vars, lineno=None, col_offset=None):
         self.context_expr = context_expr
@@ -807,7 +743,6 @@ class AsyncWith(With):
 class Yield(base.BaseNode):
 
     _astroid_fields = ('value',)
-    value = base.Empty
 
     def __init__(self, value, lineno=None, col_offset=None):
         self.value = value
@@ -936,8 +871,6 @@ class Module(base.BaseNode):
 
 class BaseComprehension(base.BaseNode):
     _astroid_fields = ('generators', 'elt')
-    elt = base.Empty
-    generators = base.Empty
 
     def __init__(self, generators, elt, lineno=None, col_offset=None):
         self.generators = generators
@@ -951,8 +884,6 @@ class GeneratorExp(BaseComprehension):
 
 class DictComp(BaseComprehension):
     _astroid_fields = ('generators', 'key', 'value')
-    key = base.Empty
-    value = base.Empty
 
     def __init__(self, generators, key, value, lineno=None, col_offset=None):
         self.generators = generators
@@ -978,8 +909,6 @@ if six.PY3:
 else:
     class ListComp(_ListComp):
         _astroid_fields = ('generators', 'elt')
-        elt = base.Empty
-        generators = base.Empty
 
         # TODO: this still duplicates code in base comprehension.
         def __init__(self, generators, elt, lineno=None, col_offset=None):
@@ -1033,7 +962,6 @@ class FunctionDef(LambdaFunctionMixin, Statement):
 
     _astroid_fields = ('decorators', 'args', 'body', 'returns')
     _other_fields = ('name', 'doc')
-    decorators = base.Empty
 
     def __init__(self, name, doc, args, body, decorators, returns, lineno=None, col_offset=None):
         self.name = name
@@ -1087,7 +1015,6 @@ class ClassDef(Statement):
 
     _astroid_fields = ('decorators', 'bases', 'body', 'keywords')
     _other_fields = ('name', 'doc')
-    decorators = base.Empty
 
     def __init__(self, name, doc, bases, body, decorators, keywords, lineno=None, col_offset=None):
         self.name = name
