@@ -36,12 +36,9 @@ class BaseContainer(base.BaseNode):
 
     _astroid_fields = ('elts',)
 
-    def __init__(self, lineno=None, col_offset=None, parent=None):
-        self.elts = []
-        super(BaseContainer, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, elts):
+    def __init__(self, elts, lineno=None, col_offset=None):
         self.elts = elts
+        super(BaseContainer, self).__init__(lineno, col_offset)
 
 
 class Statement(base.BaseNode):
@@ -52,9 +49,9 @@ class Statement(base.BaseNode):
 class BaseAssignName(base.BaseNode):
     _other_fields = ('name',)
 
-    def __init__(self, name=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, name, lineno=None, col_offset=None):
         self.name = name
-        super(BaseAssignName, self).__init__(lineno, col_offset, parent)
+        super(BaseAssignName, self).__init__(lineno, col_offset)
 
 
 class AssignName(BaseAssignName):
@@ -66,55 +63,43 @@ class Parameter(BaseAssignName):
     _astroid_fields = ('default', 'annotation')
     _other_fields = ('name', )
 
-    def __init__(self, name=None, lineno=None, col_offset=None, parent=None):
-        super(Parameter, self).__init__(name=name, lineno=lineno, col_offset=col_offset, parent=parent)
-
-    def postinit(self, default, annotation):
+    def __init__(self, name, default, annotation, lineno=None, col_offset=None):
+        self.name = name
         self.default = default
         self.annotation = annotation
+        super(Parameter, self).__init__(name=name, lineno=lineno, col_offset=col_offset)
 
 
 class DelName(base.BaseNode):
 
     _other_fields = ('name',)
 
-    def __init__(self, name=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, name, lineno=None, col_offset=None):
         self.name = name
-        super(DelName, self).__init__(lineno, col_offset, parent)
+        super(DelName, self).__init__(lineno, col_offset)
 
 
 class Name(base.BaseNode):
 
     _other_fields = ('name',)
 
-    def __init__(self, name=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, name, lineno=None, col_offset=None):
         self.name = name
-        super(Name, self).__init__(lineno, col_offset, parent)
-    
+        super(Name, self).__init__(lineno, col_offset)
+
 
 class Arguments(base.BaseNode):
 
     _astroid_fields = ('args', 'vararg', 'kwarg', 'keyword_only', 'positional_only')
 
-    def __init__(self, lineno=None, col_offset=None, parent=None):
-        # We don't want lineno and col_offset from the parent's __init__.
-        super(Arguments, self).__init__(parent=parent)
-
-    def postinit(self, args, vararg, kwarg, keyword_only, positional_only):
+    def __init__(self, args, vararg, kwarg, keyword_only, positional_only):
         self.args = args
         self.vararg = vararg
         self.kwarg = kwarg
         self.keyword_only = keyword_only
         self.positional_only = positional_only
         self.positional_and_keyword = self.args + self.positional_only
-
-    @property
-    def fromlineno(self):
-        # Let the Function's lineno be the lineno for this.
-        if self.parent.fromlineno:
-            return self.parent.fromlineno
-
-        return super(Arguments, self).fromlineno
+        super(Arguments, self).__init__(None, None)
 
     @staticmethod
     def _format_args(args):
@@ -200,12 +185,10 @@ class AssignAttr(base.BaseNode):
     _other_fields = ('attrname',)
     expr = base.Empty
 
-    def __init__(self, attrname=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, attrname, expr, lineno=None, col_offset=None):
         self.attrname = attrname
-        super(AssignAttr, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, expr=base.Empty):
         self.expr = expr
+        super(AssignAttr, self).__init__(lineno, col_offset)
 
 
 class Assert(Statement):
@@ -214,9 +197,10 @@ class Assert(Statement):
     test = base.Empty
     fail = base.Empty
 
-    def postinit(self, test=base.Empty, fail=base.Empty):
-        self.fail = fail
+    def __init__(self, test, fail, lineno=None, col_offset=None):
         self.test = test
+        self.fail = fail
+        super(Assert, self).__init__(lineno, col_offset)
 
 
 class Assign(Statement):
@@ -225,9 +209,10 @@ class Assign(Statement):
     targets = base.Empty
     value = base.Empty
 
-    def postinit(self, targets=base.Empty, value=base.Empty):
+    def __init__(self, targets, value, lineno=None, col_offset=None):
         self.targets = targets
         self.value = value
+        super(Assign, self).__init__(lineno, col_offset)
 
 
 class AugAssign(Statement):
@@ -237,13 +222,11 @@ class AugAssign(Statement):
     target = base.Empty
     value = base.Empty
 
-    def __init__(self, op=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, op, target, value, lineno=None, col_offset=None):
         self.op = op
-        super(AugAssign, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, target=base.Empty, value=base.Empty):
         self.target = target
         self.value = value
+        super(AugAssign, self).__init__(lineno, col_offset)
 
 
 class Repr(base.BaseNode):
@@ -251,8 +234,9 @@ class Repr(base.BaseNode):
     _astroid_fields = ('value',)
     value = base.Empty
 
-    def postinit(self, value=base.Empty):
+    def __init__(self, value, lineno=None, col_offset=None):
         self.value = value
+        super(Repr, self).__init__(lineno, col_offset)
 
 
 class BinOp(base.BaseNode):
@@ -262,13 +246,11 @@ class BinOp(base.BaseNode):
     left = base.Empty
     right = base.Empty
 
-    def __init__(self, op=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, op, left, right, lineno=None, col_offset=None):
         self.op = op
-        super(BinOp, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, left=base.Empty, right=base.Empty):
         self.left = left
         self.right = right
+        super(BinOp, self).__init__(lineno, col_offset)
 
 
 class BoolOp(base.BaseNode):
@@ -277,12 +259,10 @@ class BoolOp(base.BaseNode):
     _other_fields = ('op',)
     values = base.Empty
 
-    def __init__(self, op=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, op, values, lineno=None, col_offset=None):
         self.op = op
-        super(BoolOp, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, values=base.Empty):
         self.values = values
+        super(BoolOp, self).__init__(lineno, col_offset)
 
 
 class Break(Statement):
@@ -296,10 +276,11 @@ class Call(base.BaseNode):
     args = base.Empty
     keywords = base.Empty
 
-    def postinit(self, func=base.Empty, args=base.Empty, keywords=base.Empty):
+    def __init__(self, func, args, keywords, lineno=None, col_offset=None):
         self.func = func
         self.args = args
         self.keywords = keywords
+        super(Call, self).__init__(lineno, col_offset)
 
     @property
     def starargs(self):
@@ -319,14 +300,11 @@ class Compare(base.BaseNode):
     left = base.Empty
     comparators = base.Empty
 
-    def __init__(self, ops, lineno=None, col_offset=None, parent=None):
-        self.comparators = []
+    def __init__(self, ops, left, comparators, lineno=None, col_offset=None):
         self.ops = ops
-        super(Compare, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, left=base.Empty, comparators=base.Empty):
         self.left = left
         self.comparators = comparators
+        super(Compare, self).__init__(lineno, col_offset)
 
 
 class Comprehension(base.BaseNode):
@@ -336,24 +314,20 @@ class Comprehension(base.BaseNode):
     iter = base.Empty
     ifs = base.Empty
 
-    def __init__(self, parent=None):
-        self.parent = parent
-
-    def postinit(self, target=base.Empty, iter=base.Empty, ifs=base.Empty):
+    def __init__(self, target, iter, ifs):
         self.target = target
         self.iter = iter
-        self.ifs = ifs
 
 
 class Const(base.BaseNode):
     """Represent a constant node like num, str, bytes."""
     _other_fields = ('value',)
 
-    def __init__(self, value, lineno=None, col_offset=None, parent=None):
+    def __init__(self, value, lineno=None, col_offset=None):
         self.value = value
-        super(Const, self).__init__(lineno, col_offset, parent)
+        super(Const, self).__init__(lineno, col_offset)
 
-    
+
 class NameConstant(Const):
     """Represents a builtin singleton, at the moment True, False, None and NotImplemented."""
 
@@ -367,8 +341,9 @@ class Decorators(base.BaseNode):
     _astroid_fields = ('nodes',)
     nodes = base.Empty
 
-    def postinit(self, nodes):
+    def __init__(self, nodes, lineno=None, col_offset=None):
         self.nodes = nodes
+        super(Decorators, self).__init__(lineno, col_offset)
 
 
 class DelAttr(base.BaseNode):
@@ -377,12 +352,10 @@ class DelAttr(base.BaseNode):
     _other_fields = ('attrname',)
     expr = base.Empty
 
-    def __init__(self, attrname=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, attrname, expr, lineno=None, col_offset=None):
         self.attrname = attrname
-        super(DelAttr, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, expr=base.Empty):
         self.expr = expr
+        super(DelAttr, self).__init__(lineno, col_offset)
 
 
 class Delete(Statement):
@@ -390,22 +363,19 @@ class Delete(Statement):
     _astroid_fields = ('targets',)
     targets = base.Empty
 
-    def postinit(self, targets=base.Empty):
+    def __init__(self, targets, lineno=None, col_offset=None):
         self.targets = targets
+        super(Delete, self).__init__(lineno, col_offset)
 
 
 class Dict(base.BaseNode):
 
     _astroid_fields = ('keys', 'values')
 
-    def __init__(self, lineno=None, col_offset=None, parent=None):
-        self.keys = []
-        self.values = []
-        super(Dict, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, keys, values):
+    def __init__(self, keys, values, lineno=None, col_offset=None):
         self.keys = keys
         self.values = values
+        super(Dict, self).__init__(lineno, col_offset)
 
     @property
     def items(self):
@@ -417,8 +387,9 @@ class Expr(Statement):
     _astroid_fields = ('value',)
     value = base.Empty
 
-    def postinit(self, value=base.Empty):
+    def __init__(self, value, lineno=None, col_offset=None):
         self.value = value
+        super(Expr, self).__init__(lineno, col_offset)
 
 
 class Ellipsis(base.BaseNode): # pylint: disable=redefined-builtin
@@ -432,10 +403,11 @@ class ExceptHandler(Statement):
     name = base.Empty
     body = base.Empty
 
-    def postinit(self, type=base.Empty, name=base.Empty, body=base.Empty):
+    def __init__(self, type, name, body, lineno=None, col_offset=None):
         self.type = type
         self.name = name
         self.body = body
+        super(ExceptHandler, self).__init__(lineno, col_offset)
 
     @property
     def blockstart_tolineno(self):
@@ -454,10 +426,11 @@ class Exec(Statement):
     globals = base.Empty
     locals = base.Empty
 
-    def postinit(self, expr=base.Empty, globals=base.Empty, locals=base.Empty):
+    def __init__(self, expr, globals, locals, lineno=None, col_offset=None):
         self.expr = expr
         self.globals = globals
         self.locals = locals
+        super(Exec, self).__init__(lineno, col_offset)
 
 
 class ExtSlice(base.BaseNode):
@@ -465,8 +438,9 @@ class ExtSlice(base.BaseNode):
     _astroid_fields = ('dims',)
     dims = base.Empty
 
-    def postinit(self, dims=base.Empty):
+    def __init__(self, dims, lineno=None, col_offset=None):
         self.dims = dims
+        super(ExtSlice, self).__init__(lineno, col_offset)
 
 
 class For(base.BlockRangeMixIn, Statement):
@@ -477,11 +451,12 @@ class For(base.BlockRangeMixIn, Statement):
     body = base.Empty
     orelse = base.Empty
 
-    def postinit(self, target=base.Empty, iter=base.Empty, body=base.Empty, orelse=base.Empty):
+    def __init__(self, target, iter, body, orelse, lineno=None, col_offset=None):
         self.target = target
         self.iter = iter
         self.body = body
         self.orelse = orelse
+        super(For, self).__init__(lineno, col_offset)
 
     optional_assign = True
 
@@ -500,19 +475,20 @@ class Await(base.BaseNode):
     _astroid_fields = ('value', )
     value = base.Empty
 
-    def postinit(self, value=base.Empty):
+    def __init__(self, value, lineno=None, col_offset=None):
         self.value = value
+        super(Await, self).__init__(lineno, col_offset)
 
 
 class ImportFrom(Statement):
 
     _other_fields = ('modname', 'names', 'level')
 
-    def __init__(self, fromname, names, level=0, lineno=None, col_offset=None, parent=None):
-        self.modname = fromname
+    def __init__(self, modname, names, level, lineno=None, col_offset=None):
+        self.modname = modname
         self.names = names
         self.level = level
-        super(ImportFrom, self).__init__(lineno, col_offset, parent)
+        super(ImportFrom, self).__init__(lineno, col_offset)
 
 
 class Attribute(base.BaseNode):
@@ -521,21 +497,19 @@ class Attribute(base.BaseNode):
     _other_fields = ('attrname',)
     expr = base.Empty
 
-    def __init__(self, attrname=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, attrname, expr, lineno=None, col_offset=None):
         self.attrname = attrname
-        super(Attribute, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, expr=base.Empty):
         self.expr = expr
+        super(Attribute, self).__init__(lineno, col_offset)
 
 
 class Global(Statement):
 
     _other_fields = ('names',)
 
-    def __init__(self, names, lineno=None, col_offset=None, parent=None):
+    def __init__(self, names, lineno=None, col_offset=None):
         self.names = names
-        super(Global, self).__init__(lineno, col_offset, parent)
+        super(Global, self).__init__(lineno, col_offset)
 
 
 class If(base.BlockRangeMixIn, Statement):
@@ -545,10 +519,11 @@ class If(base.BlockRangeMixIn, Statement):
     body = base.Empty
     orelse = base.Empty
 
-    def postinit(self, test=base.Empty, body=base.Empty, orelse=base.Empty):
+    def __init__(self, test, body, orelse, lineno=None, col_offset=None):
         self.test = test
         self.body = body
         self.orelse = orelse
+        super(If, self).__init__(lineno, col_offset)
 
     @property
     def blockstart_tolineno(self):
@@ -571,19 +546,20 @@ class IfExp(base.BaseNode):
     body = base.Empty
     orelse = base.Empty
 
-    def postinit(self, test=base.Empty, body=base.Empty, orelse=base.Empty):
+    def __init__(self, test, body, orelse, lineno=None, col_offset=None):
         self.test = test
         self.body = body
         self.orelse = orelse
+        super(IfExp, self).__init__(lineno, col_offset)
 
 
 class Import(Statement):
 
     _other_fields = ('names',)
 
-    def __init__(self, names=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, names, lineno=None, col_offset=None):
         self.names = names
-        super(Import, self).__init__(lineno, col_offset, parent)
+        super(Import, self).__init__(lineno, col_offset)
 
 
 class Index(base.BaseNode):
@@ -591,8 +567,9 @@ class Index(base.BaseNode):
     _astroid_fields = ('value',)
     value = base.Empty
 
-    def postinit(self, value=base.Empty):
+    def __init__(self, value, lineno=None, col_offset=None):
         self.value = value
+        super(Index, self).__init__(lineno, col_offset)
 
 
 class Keyword(base.BaseNode):
@@ -601,30 +578,28 @@ class Keyword(base.BaseNode):
     _other_fields = ('arg',)
     value = base.Empty
 
-    def __init__(self, arg=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, arg, value, lineno=None, col_offset=None):
         self.arg = arg
-        super(Keyword, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, value=base.Empty):
         self.value = value
+        super(Keyword, self).__init__(lineno, col_offset)
 
 
 class List(BaseContainer):
 
     _other_fields = ('ctx',)
 
-    def __init__(self, ctx=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, ctx, elts, lineno=None, col_offset=None):
         self.ctx = ctx
-        super(List, self).__init__(lineno, col_offset, parent)
+        super(List, self).__init__(elts, lineno, col_offset)
 
 
 class Nonlocal(Statement):
 
     _other_fields = ('names',)
 
-    def __init__(self, names, lineno=None, col_offset=None, parent=None):
+    def __init__(self, names, lineno=None, col_offset=None):
         self.names = names
-        super(Nonlocal, self).__init__(lineno, col_offset, parent)
+        super(Nonlocal, self).__init__(lineno, col_offset)
 
 
 class Pass(Statement):
@@ -633,27 +608,27 @@ class Pass(Statement):
 
 class Print(Statement):
 
-    _astroid_fields = ('dest', 'values',)
+    _astroid_fields = ('dest', 'values')
+    _other_fields = ('nl',)
     dest = base.Empty
     values = base.Empty
 
-    def __init__(self, nl=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, nl, dest, values, lineno=None, col_offset=None):
         self.nl = nl
-        super(Print, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, dest=base.Empty, values=base.Empty):
         self.dest = dest
         self.values = values
+        super(Print, self).__init__(lineno, col_offset)
 
 
 class Raise(Statement):
 
     _astroid_fields = ('exc', 'cause', 'traceback')
 
-    def postinit(self, exc=base.Empty, cause=base.Empty, traceback=base.Empty):
+    def __init__(self, exc, cause, traceback, lineno=None, col_offset=None):
         self.exc = exc
         self.cause = cause
         self.traceback = traceback
+        super(Raise, self).__init__(lineno, col_offset)
 
 
 class Return(Statement):
@@ -661,8 +636,9 @@ class Return(Statement):
     _astroid_fields = ('value',)
     value = base.Empty
 
-    def postinit(self, value=base.Empty):
+    def __init__(self, value, lineno=None, col_offset=None):
         self.value = value
+        super(Return, self).__init__(lineno, col_offset)
 
 
 class Set(BaseContainer):
@@ -676,10 +652,11 @@ class Slice(base.BaseNode):
     upper = base.Empty
     step = base.Empty
 
-    def postinit(self, lower=base.Empty, upper=base.Empty, step=base.Empty):
+    def __init__(self, lower, upper, step, lineno=None, col_offset=None):
         self.lower = lower
         self.upper = upper
         self.step = step
+        super(Slice, self).__init__(lineno, col_offset)
 
 
 class Starred(base.BaseNode):
@@ -688,12 +665,10 @@ class Starred(base.BaseNode):
     _other_fields = ('ctx', )
     value = base.Empty
 
-    def __init__(self, ctx=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, ctx, value, lineno=None, col_offset=None):
         self.ctx = ctx
-        super(Starred, self).__init__(lineno=lineno, col_offset=col_offset, parent=parent)
-
-    def postinit(self, value=base.Empty):
         self.value = value
+        super(Starred, self).__init__(lineno=lineno, col_offset=col_offset)
 
 
 class Subscript(base.BaseNode):
@@ -703,13 +678,11 @@ class Subscript(base.BaseNode):
     value = base.Empty
     slice = base.Empty
 
-    def __init__(self, ctx=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, ctx, value, slice, lineno=None, col_offset=None):
         self.ctx = ctx
-        super(Subscript, self).__init__(lineno=lineno, col_offset=col_offset, parent=parent)
-
-    def postinit(self, value=base.Empty, slice=base.Empty):
         self.value = value
         self.slice = slice
+        super(Subscript, self).__init__(lineno=lineno, col_offset=col_offset)
 
 
 class TryExcept(base.BlockRangeMixIn, Statement):
@@ -719,10 +692,11 @@ class TryExcept(base.BlockRangeMixIn, Statement):
     handlers = base.Empty
     orelse = base.Empty
 
-    def postinit(self, body=base.Empty, handlers=base.Empty, orelse=base.Empty):
+    def __init__(self, body, handlers, orelse, lineno=None, col_offset=None):
         self.body = body
         self.handlers = handlers
         self.orelse = orelse
+        super(TryExcept, self).__init__(lineno, col_offset)
 
     def block_range(self, lineno):
         """handle block line numbers range for try/except statements"""
@@ -743,9 +717,10 @@ class TryFinally(base.BlockRangeMixIn, Statement):
     body = base.Empty
     finalbody = base.Empty
 
-    def postinit(self, body=base.Empty, finalbody=base.Empty):
+    def __init__(self, body, finalbody, lineno=None, col_offset=None):
         self.body = body
         self.finalbody = finalbody
+        super(TryFinally, self).__init__(lineno, col_offset)
 
     def block_range(self, lineno):
         """handle block line numbers range for try/finally statements"""
@@ -761,9 +736,9 @@ class Tuple(BaseContainer):
 
     _other_fields = ('ctx',)
 
-    def __init__(self, ctx=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, ctx, elts, lineno=None, col_offset=None):
         self.ctx = ctx
-        super(Tuple, self).__init__(lineno, col_offset, parent)
+        super(Tuple, self).__init__(elts, lineno, col_offset)
 
 
 class UnaryOp(base.BaseNode):
@@ -772,12 +747,10 @@ class UnaryOp(base.BaseNode):
     _other_fields = ('op',)
     operand = base.Empty
 
-    def __init__(self, op=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, op, operand, lineno=None, col_offset=None):
         self.op = op
-        super(UnaryOp, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, operand=base.Empty):
         self.operand = operand
+        super(UnaryOp, self).__init__(lineno, col_offset)
 
 
 class While(base.BlockRangeMixIn, Statement):
@@ -787,10 +760,11 @@ class While(base.BlockRangeMixIn, Statement):
     body = base.Empty
     orelse = base.Empty
 
-    def postinit(self, test=base.Empty, body=base.Empty, orelse=base.Empty):
+    def __init__(self, test, body, orelse, lineno=None, col_offset=None):
         self.test = test
         self.body = body
         self.orelse = orelse
+        super(While, self).__init__(lineno, col_offset)
 
     @property
     def blockstart_tolineno(self):
@@ -805,14 +779,10 @@ class With(base.BlockRangeMixIn, Statement):
 
     _astroid_fields = ('items', 'body')
 
-    def __init__(self, lineno=None, col_offset=None, parent=None):
-        self.items = []
-        self.body = []
-        super(With, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, items=base.Empty, body=base.Empty):
+    def __init__(self, items, body, lineno=None, col_offset=None):
         self.items = items
         self.body = body
+        super(With, self).__init__(lineno, col_offset)
 
     @property
     def blockstart_tolineno(self):
@@ -824,9 +794,10 @@ class WithItem(base.BaseNode):
     context_expr = base.Empty
     optional_vars = base.Empty
 
-    def postinit(self, context_expr=base.Empty, optional_vars=base.Empty):
+    def __init__(self, context_expr, optional_vars, lineno=None, col_offset=None):
         self.context_expr = context_expr
         self.optional_vars = optional_vars
+        super(WithItem, self).__init__(lineno, col_offset)
 
 
 class AsyncWith(With):
@@ -838,8 +809,9 @@ class Yield(base.BaseNode):
     _astroid_fields = ('value',)
     value = base.Empty
 
-    def postinit(self, value=base.Empty):
+    def __init__(self, value, lineno=None, col_offset=None):
         self.value = value
+        super(Yield, self).__init__(lineno, col_offset)
 
 
 class YieldFrom(Yield):
@@ -864,17 +836,14 @@ class Module(base.BaseNode):
         _other_fields = ('name', 'doc', 'package', 'pure_python',
                          'source_code', 'source_file')
 
-    def __init__(self, name, doc, package=None, pure_python=True, source_code=None, source_file=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, name, doc, file_encoding, package, pure_python, source_code, source_file, body, lineno=None, col_offset=None):
         self.name = name
         self.doc = doc
+        self.file_encoding = file_encoding
         self.package = package
-        self.parent = parent
         self.pure_python = pure_python
         self.source_code = source_code
         self.source_file = source_file
-        self.body = []
-
-    def postinit(self, body=()):
         self.body = body
 
     @property
@@ -970,12 +939,10 @@ class BaseComprehension(base.BaseNode):
     elt = base.Empty
     generators = base.Empty
 
-    def postinit(self, generators=base.Empty, elt=base.Empty):
-        if generators is base.Empty:
-            self.generators = []
-        else:
-            self.generators = generators
+    def __init__(self, generators, elt, lineno=None, col_offset=None):
+        self.generators = generators
         self.elt = elt
+        super(BaseComprehension, self).__init__(lineno, col_offset)
 
 
 class GeneratorExp(BaseComprehension):
@@ -987,13 +954,15 @@ class DictComp(BaseComprehension):
     key = base.Empty
     value = base.Empty
 
-    def postinit(self, generators=base.Empty, key=base.Empty, value=base.Empty):
-        if generators is base.Empty:
-            self.generators = []
-        else:
-            self.generators = generators
+    def __init__(self, generators, key, value, lineno=None, col_offset=None):
+        self.generators = generators
         self.key = key
         self.value = value
+        # TODO: figure out a better solution here to inheritance for DictComp.
+        
+        # super(DictComp, self).__init__(lineno, col_offset)
+        self.lineno = lineno
+        self.col_offset = col_offset
 
 
 class SetComp(BaseComprehension):
@@ -1001,20 +970,22 @@ class SetComp(BaseComprehension):
 
 
 class _ListComp(base.BaseNode):
-    _astroid_fields = ('generators', 'elt')
-    elt = base.Empty
-    generators = base.Empty
-
-    def postinit(self, generators=base.Empty, elt=base.Empty):
-        self.generators = generators
-        self.elt = elt
+    pass
 
 if six.PY3:
     class ListComp(_ListComp, BaseComprehension):
         pass
 else:
     class ListComp(_ListComp):
-        pass
+        _astroid_fields = ('generators', 'elt')
+        elt = base.Empty
+        generators = base.Empty
+
+        # TODO: this still duplicates code in base comprehension.
+        def __init__(self, generators, elt, lineno=None, col_offset=None):
+            self.generators = generators
+            self.elt = elt
+            super(_ListComp, self).__init__(lineno, col_offset)
 
 
 class LambdaFunctionMixin(base.BaseNode):
@@ -1052,14 +1023,10 @@ class Lambda(LambdaFunctionMixin):
     _other_fields = ('name',)
     name = '<lambda>'
 
-    def __init__(self, lineno=None, col_offset=None, parent=None):
-        self.args = []
-        self.body = []
-        super(Lambda, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, args, body):
+    def __init__(self, args, body, lineno=None, col_offset=None):
         self.args = args
         self.body = body
+        super(Lambda, self).__init__(lineno, col_offset)
 
 
 class FunctionDef(LambdaFunctionMixin, Statement):
@@ -1068,16 +1035,14 @@ class FunctionDef(LambdaFunctionMixin, Statement):
     _other_fields = ('name', 'doc')
     decorators = base.Empty
 
-    def __init__(self, name=None, doc=None, lineno=None, col_offset=None, parent=None):
+    def __init__(self, name, doc, args, body, decorators, returns, lineno=None, col_offset=None):
         self.name = name
         self.doc = doc
-        super(FunctionDef, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, args, body, decorators=base.Empty, returns=base.Empty):
         self.args = args
         self.body = body
         self.decorators = decorators
         self.returns = returns
+        super(FunctionDef, self).__init__(lineno, col_offset)
 
     @property
     def fromlineno(self):
@@ -1124,18 +1089,14 @@ class ClassDef(Statement):
     _other_fields = ('name', 'doc')
     decorators = base.Empty
 
-    def __init__(self, name=None, doc=None, lineno=None, col_offset=None, parent=None):
-        self.bases = []
-        self.body = []
+    def __init__(self, name, doc, bases, body, decorators, keywords, lineno=None, col_offset=None):
         self.name = name
         self.doc = doc
-        super(ClassDef, self).__init__(lineno, col_offset, parent)
-
-    def postinit(self, bases, body=[], decorators=[], keywords=[]):
         self.bases = bases
         self.body = body
         self.decorators = decorators
         self.keywords = keywords
+        super(ClassDef, self).__init__(lineno, col_offset)
 
     @property
     def blockstart_tolineno(self):

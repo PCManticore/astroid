@@ -51,7 +51,7 @@ class Python3TC(unittest.TestCase):
         self.assertIsInstance(yieldfrom_stmt, Expr)
         self.assertIsInstance(yieldfrom_stmt.value, YieldFrom)
         self.assertEqual(yieldfrom_stmt.as_string(),
-                         'yield from iter([1, 2])')
+                         '(yield from iter([1, 2]))')
 
     @test_utils.require_version('3.3')
     def test_yield_from_is_generator(self):
@@ -68,8 +68,8 @@ class Python3TC(unittest.TestCase):
     def test_yield_from_as_string(self):
         body = dedent("""
         def func():
-            yield from iter([1, 2])
-            value = yield from other()
+            (yield from iter([1, 2]))
+            value = (yield from other())
         """)
         astroid = builder.parse(body)
         func = astroid.body[0]

@@ -52,10 +52,9 @@ class BaseNode(object):
     # instance specific inference function infer(node, context)
     _explicit_inference = None
 
-    def __init__(self, lineno=None, col_offset=None, parent=None):
+    def __init__(self, lineno=None, col_offset=None):
         self.lineno = lineno
         self.col_offset = col_offset
-        self.parent = parent
  
     def __iter__(self):
         for field in self._astroid_fields:
