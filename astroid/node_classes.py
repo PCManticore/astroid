@@ -298,6 +298,7 @@ class Comprehension(base.BaseNode):
     def __init__(self, target, iter, ifs):
         self.target = target
         self.iter = iter
+        self.ifs = ifs
 
 
 class Const(base.BaseNode):
@@ -764,12 +765,8 @@ class Module(base.BaseNode):
     fromlineno = 0
     lineno = 0
 
-    if six.PY2:
-        _other_fields = ('name', 'doc', 'file_encoding', 'package',
-                         'pure_python', 'source_code', 'source_file')
-    else:
-        _other_fields = ('name', 'doc', 'package', 'pure_python',
-                         'source_code', 'source_file')
+    _other_fields = ('name', 'doc', 'file_encoding', 'package',
+                     'pure_python', 'source_code', 'source_file')
 
     def __init__(self, name, doc, file_encoding, package, pure_python, source_code, source_file, body, lineno=None, col_offset=None):
         self.name = name
