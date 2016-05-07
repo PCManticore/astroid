@@ -82,7 +82,7 @@ class BaseNode(object):
 
     def __str__(self):
         rname = self._repr_name()
-        cname = type(self).__name__
+        cname = self.__class__.__name__
         if rname:
             string = '%(cname)s.%(rname)s(%(fields)s)'
             alignment = len(cname) + len(rname) + 2
@@ -115,7 +115,7 @@ class BaseNode(object):
             string = '<%(cname)s.%(rname)s l.%(lineno)s at 0x%(id)x>'
         else:
             string = '<%(cname)s l.%(lineno)s at 0x%(id)x>'
-        return string % {'cname': type(self).__name__,
+        return string % {'cname': self.__class__.__name__,
                          'rname': rname,
                          'lineno': self.fromlineno,
                          'id': id(self)}
@@ -216,7 +216,7 @@ class BaseNode(object):
             """Outputs a strings representation of an astroid node."""
             if node in done:
                 result.append('<Recursion on %s with id=%s>' %
-                              (type(node).__name__, id(node)))
+                              (node.__class__.__name__, id(node)))
                 return False
             else:
                 done.add(node)
@@ -226,9 +226,10 @@ class BaseNode(object):
             depth += 1
             cur_indent += indent
             if ids:
-                result.append('%s<0x%x>(\n' % (type(node).__name__, id(node)))
+                result.append('%s<0x%x>(\n' %
+                              (node.__class__.__name__, id(node)))
             else:
-                result.append('%s(' % type(node).__name__)
+                result.append('%s(' % node.__class__.__name__)
             fields = []
             if include_linenos:
                 fields.extend(('lineno', 'col_offset'))
