@@ -18,13 +18,13 @@ class AbstractVisitor(object):
         '''Abstract init method that sets up singledispatch for visit().'''
         # This is the implementation for object, which always raises
         # an error since no visitor operates over all types.
-        def inappropriate_type(instance):
+        def inappropriate_type(node):
             raise TypeError('Inappropriate type %s for visitor %s.' %
-                            (instance.__class__, self.__class__))
+                            (node.__class__, self.__class__))
         self.visit = util.singledispatch(inappropriate_type)
 
     @abc.abstractmethod
-    def visit_base(self, instance):
+    def visit_base(self, node):
         '''Abstract visit method that should be overridden in subclasses.'''
         raise NotImplementedError
 
@@ -48,18 +48,43 @@ class AstroidVisitor(AbstractVisitor):
                                      % method)
 
     @abc.abstractmethod
-    def visit_sequence(self, focus):
+    def visit_sequence(self, node):
         '''Abstract visit method for sequences in an astroid AST.'''
         raise NotImplementedError
 
 
 class TransformVisitor(AstroidVisitor):
 
-    def visit_base(self, focus):
+    def visit_base(self, node):
         fields = {f: self.visit(c) for f, c in
-                  zip(focus._astroid_fields, focus.children())}
-        return focus.edit(**fields)
+                  zip(node._astroid_fields, node.children())}
+        return node.edit(**fields)
 
-    def visit_sequence(self, focus):
-        return focus.replace(focus.__class__(self.visit(child) for
-                                             child in focus.children()))
+    def visit_sequence(self, node):
+        return node.replace(node.__class__(self.visit(child) for
+                                           child in node.children()))
+
+
+class Sequence(object):
+
+    def __init__(self, *visitors):
+        self.visitors = visitors
+
+    def visit(self, node):
+        for visitor in visitors:
+            node = visitor.visit(node)
+        return node
+
+
+class Choice(object):
+    def __init__(self, true, false, predicate):
+        self.true = true
+        self.false = false
+        self.predicate = predicate
+
+    def visit(self, node):
+        if predicate(node):
+            return self.true.visit(node)
+        else:
+            return self.false.visit(node)
+
