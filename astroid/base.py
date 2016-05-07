@@ -259,6 +259,18 @@ class BaseNode(object):
         """Shortcut method to print the result of repr_tree()."""
         print(self.repr_tree(*args, **kws))
 
+    def recreate(self, **kws):
+        '''Creates a new node with some fields from an existing node.
+        
+        This calls __init__ with the keyword arguments it's given,
+        replacing any missing fields with the values from the existing
+        node.
+        '''
+        for field in self._astroid_fields + self._other_fields:
+            if field not in kws:
+                kws[field] = getattr(self, field)
+        return self.__class__(**kws)
+
 
 class BlockRangeMixIn(object):
     """override block range """

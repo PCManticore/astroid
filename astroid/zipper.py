@@ -343,18 +343,34 @@ class Zipper(wrapt.ObjectProxy):
         return (d for d in self.preorder_descendants(skip_class) if isinstance(d, cls))
 
     # Editing
-    def replace(self, focus):
+    def replace(self, new_focus):
         '''Replaces the existing node at the focus.
 
         Arguments:
-            focus (base.BaseNode, collections.Sequence): The object to replace
-                the focus with.
+            new_focus (base.BaseNode, collections.Sequence): The object to
+                replace the focus with.
         '''
-        return type(self)(focus=focus, path=self._self_path._replace(changed=True))
+        if self._self_path:
+            new_path = self._self_path._replace(changed=True)
+        else:
+            new_path = None
+        return type(self)(focus=new_focus, path=new_path)
 
-    # def edit(self, *args, **kws):
-    #     return type(self)(focus=self.__wrapped__.make_focus(*args, **kws),
-    #                       path=self._self_path._replace(changed=True))
+    def edit(self, **kws):
+        '''Creates a new node from the existing node at the focus.
+
+        This method doesn't apply if the focus is a sequence.
+
+        Arguments:
+            kws (base.BaseNode): The fields to replace in the new node using
+                recreate().
+        '''
+        if self._self_path:
+            new_path = self._self_path._replace(changed=True)
+        else:
+            new_path = None
+        return type(self)(focus=self.__wrapped__.recreate(**kws),
+                          path=new_path)
 
     # Legacy APIs
     @property

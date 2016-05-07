@@ -1,7 +1,6 @@
 # Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html
 # For details: https://github.com/PyCQA/astroid/blob/master/COPYING.LESSER
 
-
 from __future__ import print_function
 
 import contextlib
@@ -9,7 +8,9 @@ import unittest
 
 from astroid import nodes
 from astroid import parse
+from astroid import test_utils
 from astroid import transforms
+from astroid import visitors
 
 
 @contextlib.contextmanager
@@ -27,8 +28,40 @@ class TestTransforms(unittest.TestCase):
         self.transformer = transforms.TransformVisitor()
 
     def parse_transform(self, code):
-        module = parse(code, apply_transforms=False)
+        module = parse(code)
         return self.transformer.visit(module)
+
+    def _parse_transform(self, code, transformer):
+        module = parse(code)
+        # import pdb; pdb.set_trace()
+        return transformer.visit(module)
+
+    def test_removing_calls(self):
+        class TransformCall(visitors.TransformVisitor):
+            def visit_call(self, focus):
+                return focus.replace(focus.args[0])
+
+        code = '''
+        class C(object):
+            foo = __(3)
+            def f(a, b=__('bar')):
+                class D(object):
+                    __(c)
+                    def g(d):
+                        return __(d)
+        '''
+
+        module = self._parse_transform(code, TransformCall())
+        nodes = test_utils.extract_node(code)
+        three = module.body[0].body[0].value
+        f = module.body[0].body[1]
+        bar = f.args.args[1].default
+        c = f.body[0].body[0].value
+        d = f.body[0].body[1].body[0].value
+        self.assertEqual(nodes[0], three)
+        self.assertEqual(nodes[1], bar)
+        self.assertEqual(nodes[2], c)
+        self.assertEqual(nodes[3], d)
 
     # TODO: figure out what should happen to these tests that depend
     # on inference.
@@ -78,27 +111,45 @@ class TestTransforms(unittest.TestCase):
     #     self.assertIsInstance(module.body[2].value, nodes.Const)
     #     self.assertFalse(module.body[2].value.value)
 
-    def _test_transform_patches_locals(self):
-        def transform_function(node):
-            assign = nodes.Assign()
-            name = nodes.AssignName()
-            name.name = 'value'
-            assign.targets = [name]
-            assign.value = nodes.Const(42)
-            node.body.append(assign)
+    def test_transform_patches_locals(self):
+        class TransformFunction(visitors.TransformVisitor):
+            def visit_functiondef(self, focus):
+                name = nodes.AssignName(name='value')
+                assign = nodes.Assign(targets=[name], value=nodes.Const(42))
+                new_body = focus.body + [assign]
+                return focus.edit(body=new_body)
 
-        self.transformer.register_transform(nodes.FunctionDef,
-                                            transform_function)
-
-        module = self.parse_transform('''
+        module = self._parse_transform('''
         def test():
             pass
-        ''')
+        ''', TransformFunction())
 
         func = module.body[0]
         self.assertEqual(len(func.body), 2)
         self.assertIsInstance(func.body[1], nodes.Assign)
         self.assertEqual(func.body[1].as_string(), 'value = 42')
+
+
+    # TODO: old code, remove
+        
+    # def test_transform_patches_locals(self):
+    #     def transform_function(node):
+    #         name = nodes.AssignName(name='value')
+    #         assign = nodes.Assign(targets=[name], value=nodes.Const(42))
+    #         node.body.append(assign)
+
+    #     self.transformer.register_transform(nodes.FunctionDef,
+    #                                         transform_function)
+
+    #     module = self.parse_transform('''
+    #     def test():
+    #         pass
+    #     ''')
+
+    #     func = module.body[0]
+    #     self.assertEqual(len(func.body), 2)
+    #     self.assertIsInstance(func.body[1], nodes.Assign)
+    #     self.assertEqual(func.body[1].as_string(), 'value = 42')
 
     # def test_predicates(self):
     #     def transform_call(node):
@@ -192,31 +243,31 @@ class TestTransforms(unittest.TestCase):
     #     self.assertIsInstance(asctime.args.args[0], nodes.AssignName)
     #     self.assertEqual(asctime.args.args[0].name, 'value')
 
-    def _test_builder_apply_transforms(self):
-        def transform_function(node):
-            return nodes.Const(42)
+    # TODO: manager was removed.
 
-        manager = builder.MANAGER
-        with add_transform(manager, nodes.FunctionDef, transform_function):
-            astroid_builder = builder.AstroidBuilder(apply_transforms=False)
-            module = astroid_builder.string_build('''def test(): pass''')
+    # def test_builder_apply_transforms(self):
+    #     def transform_function(node):
+    #         return nodes.Const(42)
 
-        # The transform wasn't applied.
-        self.assertIsInstance(module.body[0], nodes.FunctionDef)
+    #     manager = builder.MANAGER
+    #     with add_transform(manager, nodes.FunctionDef, transform_function):
+    #         astroid_builder = builder.AstroidBuilder(apply_transforms=False)
+    #         module = astroid_builder.string_build('''def test(): pass''')
 
-    def _test_transform_crashes_on_is_subtype_of(self):
+    #     # The transform wasn't applied.
+    #     self.assertIsInstance(module.body[0], nodes.FunctionDef)
+
+    def test_transform_crashes_on_is_subtype_of(self):
         # Test that we don't crash when having is_subtype_of
         # in a transform, as per issue #188. This happened
         # before, when the transforms weren't in their own step.
-        def transform_class(cls):
-            if cls.is_subtype_of('django.db.models.base.Model'):
+        class TransformClass(visitors.TransformVisitor):
+            def visit_classdef(self, cls):
+                if cls.is_subtype_of('django.db.models.base.Model'):
+                    return cls
                 return cls
-            return cls
 
-        self.transformer.register_transform(nodes.ClassDef,
-                                            transform_class)
-
-        self.parse_transform('''
+        self._parse_transform('''
             # Change environ to automatically call putenv() if it exists
             import os
             putenv = os.putenv
@@ -227,8 +278,34 @@ class TestTransforms(unittest.TestCase):
                 pass
             else:
                 import UserDict
-        ''')
+        ''', TransformClass())
 
+    # TODO: old code, remove.
+
+    # def test_transform_crashes_on_is_subtype_of(self):
+    #     # Test that we don't crash when having is_subtype_of
+    #     # in a transform, as per issue #188. This happened
+    #     # before, when the transforms weren't in their own step.
+    #     def transform_class(cls):
+    #         if cls.is_subtype_of('django.db.models.base.Model'):
+    #             return cls
+    #         return cls
+
+    #     self.transformer.register_transform(nodes.ClassDef,
+    #                                         transform_class)
+
+    #     self.parse_transform('''
+    #         # Change environ to automatically call putenv() if it exists
+    #         import os
+    #         putenv = os.putenv
+    #         try:
+    #             # This will fail if there's no putenv
+    #             putenv
+    #         except NameError:
+    #             pass
+    #         else:
+    #             import UserDict
+    #     ''')
 
 if __name__ == '__main__':
     unittest.main()
