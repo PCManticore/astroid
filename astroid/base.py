@@ -64,7 +64,11 @@ class BaseNode(object):
 
     def _repr_name(self):
         """return self.name or self.attrname or '' for nice representation"""
-        return getattr(self, 'name', getattr(self, 'attrname', ''))
+        # ExceptHandler has a 'name' field that contains a node.
+        if 'name' in self._astroid_fields:
+            return ''
+        else:
+            return getattr(self, 'name', getattr(self, 'attrname', ''))
 
     def __str__(self):
         rname = self._repr_name()
