@@ -287,51 +287,94 @@ class Zipper(wrapt.ObjectProxy):
     # Python 3 and ensure that no AST will overflow the call stack.
     # On CPython, avoiding the extra function calls necessary for a
     # recursive algorithm will probably make them faster too.
-    def preorder_descendants(self, dont_recurse_on=None):
+    def preorder_descendants(self, dont_recurse_on=()):
         '''Iterates over the descendants of the focus in prefix order.
 
         Arguments:
             dont_recurse_on (base.BaseNode): If not None, will not include nodes
                 of this type or types or any of the descendants of those nodes.
         '''
-        to_visit = [self]
-        while to_visit:
-            location = to_visit.pop()
-            yield location
-            if dont_recurse_on is None:
-                to_visit.extend(c for c in
-                                reversed(tuple(location.children())))
+        # Start at a given location.
+        # 
+        # Yield the current node.
+        #
+        # Move down if possible.  Yield that node.  Continue until
+        # moving down is no longer possible.
+        #
+        # Move right if possible.  Yield that node.  Repeat as above,
+        # going down if possible and yielding.
+        #
+        # Go up until it's possible to move right again, don't yield
+        # any node (they've already been yielded).
+        location = Zipper(self.__wrapped__)
+        while location is not None:
+            if not isinstance(location, dont_recurse_on):
+                new_location = yield location
+                if new_location is not None:
+                    location = new_location
+                if location.down() is not None:
+                    location = location.down()
+                    continue
+            if location.right() is not None:
+                location = location.right()
             else:
-                to_visit.extend(c for c in
-                                reversed(tuple(location.children()))
-                                if not isinstance(c, dont_recurse_on))
+                while location is not None:
+                    location = location.up()
+                    if location is not None and location.right() is not None:
+                        location = location.right()
+                        break
 
-    def postorder_descendants(self, dont_recurse_on=None):
+    def postorder_descendants(self, dont_recurse_on=()):
         '''Iterates over the descendants of the focus in postfix order.
 
         Arguments:
             dont_recurse_on (base.BaseNode): If not None, will not include nodes
                 of this type or types or any of the descendants of those nodes.
         '''
-        to_visit = [self]
-        visited_ancestors = []
-        while to_visit:
-            location = to_visit[-1]
-            if not visited_ancestors or visited_ancestors[-1] is not location:
-                visited_ancestors.append(location)
-                if dont_recurse_on is None:
-                    to_visit.extend(c for c in
-                                    reversed(tuple(location.children())))
-                else:
-                    to_visit.extend(c for c in
-                                    reversed(tuple(location.children()))
-                                    if not isinstance(c, dont_recurse_on))
-                continue
-            visited_ancestors.pop()
-            yield location
-            to_visit.pop()
+        # Start at a given node.
+        # 
+        # Move down until it's no longer possible to move down, then
+        # yield that node.
+        # 
+        # If it's not possible to move down, move right, then try to
+        # move down again, repeat as above.
+        #
+        # Once it's no longer possible to move down or right, move up,
+        # yield that node.
 
-    def find_descendants_of_type(self, cls, skip_class=None):
+        location = Zipper(self.__wrapped__)
+        while (location.down() is not None and not
+               isinstance(location, dont_recurse_on)):
+            location = location.down()
+        while location is not None:
+            if not isinstance(location, dont_recurse_on):
+                new_location = yield location
+                if new_location is not None:
+                    location = new_location
+            if location.right() is not None:
+                location = location.right()
+                while (location.down() is not None and not
+                       isinstance(location, dont_recurse_on)):
+                    location = location.down()
+            else:
+                location = location.up()
+
+    def postorder_next(self):
+        if location.up() is None:
+            return
+        else:
+            if location.right() is not None:
+                if location.right().down():
+                    location = location.right().down()
+                    while location.down() is not None:
+                        location = location.down()
+                    return location
+                else:
+                    return location.right()
+            else:
+                return location.up()
+
+    def find_descendants_of_type(self, cls, skip_class=()):
         '''Iterates over the descendants of the focus of a given type in
         prefix order.
 
@@ -404,7 +447,7 @@ class Zipper(wrapt.ObjectProxy):
     def previous_sibling(self):
         return self.left()
 
-    def nodes_of_class(self, cls, skip_class=None):
+    def nodes_of_class(self, cls, skip_class=()):
         return self.find_descendants_of_type(cls, skip_class)
 
     def frame(self):

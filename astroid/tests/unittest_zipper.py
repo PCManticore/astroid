@@ -201,7 +201,7 @@ class TestZipper(unittest.TestCase):
             self.check_linked_list(position._self_path.left)
             self.check_linked_list(position._self_path.parent_nodes)
             self.assertIsInstance(position._self_path.changed, bool)
-    
+
     @hypothesis.settings(perform_health_check=False)
     @hypothesis.given(ast_strategy, strategies.integers(min_value=0, max_value=100), strategies.choices())
     def test_traversal(self, ast, length, choice):
@@ -221,9 +221,11 @@ class TestZipper(unittest.TestCase):
     @hypothesis.settings(perform_health_check=False)
     @hypothesis.given(ast_strategy, strategies.choices(), node_types_strategy)
     def test_iterators(self, ast, choice, node_type):
+        hypothesis.note(str(ast[1].node))
         nodes = tuple(ast)
         random_label = choice(nodes)
         random_node = zipper.Zipper(ast[random_label].node)
+        hypothesis.note(str(random_node))
         for node, label in zip(random_node.children(), ast[random_label].children):
             self.assertIs(node.__wrapped__, ast[label].node)
         for node, label in zip(random_node.preorder_descendants(), preorder_descendants(random_label, ast)):
@@ -240,9 +242,11 @@ class TestZipper(unittest.TestCase):
     @hypothesis.settings(perform_health_check=False)
     @hypothesis.given(ast_strategy, strategies.choices())
     def test_legacy_apis(self, ast, choice):
+        hypothesis.note(str(ast[1].node))
         root = zipper.Zipper(ast[1].node)
         nodes = tuple(ast)
         random_node = traverse_to_node(choice(nodes), ast, root)
+        hypothesis.note(str(random_node))
         if random_node.up() is not None:
             if isinstance(random_node.up(), collections.Sequence) and random_node.up().up() is not None:
                 self.assertIs(random_node.parent.__wrapped__, random_node.up().up().__wrapped__)
