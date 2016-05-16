@@ -1,3 +1,6 @@
+# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html
+# For details: https://github.com/PyCQA/astroid/blob/master/COPYING.LESSER
+
 '''This contains an implementation of a zipper for astroid ASTs.
 
 A zipper is a data structure for traversing and editing immutable

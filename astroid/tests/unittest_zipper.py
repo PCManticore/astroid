@@ -1,3 +1,6 @@
+# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html
+# For details: https://github.com/PyCQA/astroid/blob/master/COPYING.LESSER
+
 '''Rather than generating a random AST, the zipper tests pick a random
 file out of astroid's code and parse it, running tests on the
 resulting AST.  The tests create a dict-of-lists graph representation
