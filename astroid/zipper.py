@@ -332,14 +332,15 @@ class Zipper(wrapt.ObjectProxy):
                     continue
             # Move right if possible.  Yield that node.  Repeat as above,
             # going down if possible and yielding.
-            if location.right() is not None:
+            if location._self_path and location._self_path.right:
                 location = location.right()
             # Go up until it's possible to move right again, don't yield
             # any nodes (they've already been yielded).
             else:
                 while location is not None:
                     location = location.up()
-                    if location is not None and location.right() is not None:
+                    if (location is not None and location._self_path
+                        and location._self_path.right):
                         location = location.right()
                         break
 
@@ -352,7 +353,7 @@ class Zipper(wrapt.ObjectProxy):
         '''
         location = Zipper(self.__wrapped__)
         # Start at the leftmost descendant of the given node.
-        while (location.down() is not None and 
+        while (((isinstance(location, base.BaseNode) and location._astroid_fields) or location) and 
                (not callable(dont_recurse_on) or not dont_recurse_on(location))):
             location = location.down()
         while location is not None:
@@ -362,11 +363,11 @@ class Zipper(wrapt.ObjectProxy):
                     location = new_location
             # It's not possible to move down, so move right, then try
             # to move down again.
-            if location.right() is not None:
+            if location._self_path and location._self_path.right:
                 location = location.right()
                 # Move down until it's no longer possible to move down, then
                 # yield that node.
-                while (location.down() is not None and
+                while (((isinstance(location, base.BaseNode) and location._astroid_fields) or location) and
                        (not callable(dont_recurse_on) or not
                         dont_recurse_on(location))):
                     location = location.down()
@@ -379,10 +380,10 @@ class Zipper(wrapt.ObjectProxy):
     #     if location.up() is None:
     #         return
     #     else:
-    #         if location.right() is not None:
+    #         if location._self_path and location._self_path.right:
     #             if location.right().down():
     #                 location = location.right().down()
-    #                 while location.down() is not None:
+    #                 while ((isinstance(location, base.BaseNode) and location._astroid_fields) or location):
     #                     location = location.down()
     #                 return location
     #             else:
