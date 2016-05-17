@@ -103,6 +103,9 @@ class FromToLineNoTest(unittest.TestCase):
             self.assertIsInstance(arg, nodes.Const)
             self.assertEqual(arg.fromlineno, 10+i)
             self.assertEqual(arg.tolineno, 10+i)
+    # On old versions of PyPy, namearg.fromlineno is 4 rather than 5.
+    if hasattr(sys, 'pypy_version_info') and sys.pypy_version_info.major < 5:
+        test_callfunc_lineno = unittest.expectedFailure(test_callfunc_lineno)
 
     def test_function_lineno(self):
         stmts = self.astroid.body
