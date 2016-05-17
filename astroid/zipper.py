@@ -105,11 +105,11 @@ Path = collections.namedtuple('Path', 'left right parent_nodes parent_path chang
 
 class Zipper(wrapt.ObjectProxy):
     '''This an object-oriented version of a zipper with methods instead of
-    functions.  All the methods return a new zipper or None, and none
-    of them mutate the underlying AST nodes.  They return None when
-    the method is not valid for that zipper.  The zipper acts as a
-    proxy so the underlying node's or sequence's methods and
-    attributes are accessible through it.
+    functions.  All the methods return a new zipper or None, or
+    iterate over zippers, and none of them mutate the underlying AST
+    nodes.  They return None when the method is not valid for that
+    zipper.  The zipper acts as a proxy so the underlying node's or
+    sequence's methods and attributes are accessible through it.
 
     Attributes:
         __wrapped__ (base.BaseNode, collections.Sequence): The AST node or
@@ -282,41 +282,60 @@ class Zipper(wrapt.ObjectProxy):
             yield child
             child = child.right()
 
-    # Iterative algorithms for these two methods, with explicit
-    # stacks, avoid the problem of yield from only being available on
-    # Python 3 and ensure that no AST will overflow the call stack.
-    # On CPython, avoiding the extra function calls necessary for a
-    # recursive algorithm will probably make them faster too.
+    # Iterative algorithms for these two methods avoid the problem of
+    # `yield from` only being available on Python 3 and ensure that no
+    # AST will overflow the call stack.  On CPython, avoiding the
+    # extra function calls necessary for a recursive algorithm will
+    # probably make them faster too.
     def preorder_descendants(self, dont_recurse_on=()):
         '''Iterates over the descendants of the focus in prefix order.
+
+        In addition to iterating over a tree without changing it,
+        calling send() with a zipper as an argument will replace the
+        node the generator just returned with the focus of the new
+        zipper, and the iteration will continue from the replaced
+        zipper.  For instance, given a starting zippered list of,
+
+        foo = [Const(1), FunctionDef(f, ...), Const(2)]
+
+        The following code will print Const(1), FunctionDef(f, ...),
+        and Const(2), without recursing into the FunctionDef node, and
+        going up() from the final node, Const(2), would return the list
+        [Const(1), Const('f'), Const(2)].
+
+        iterator = foo.preorder_descendants():
+        node = next(iterator)
+        while True:
+            print(node)
+            if isinstance(node, node_classes.FunctionDef):
+                node = iterator.send(Const(node.name))
+            else:
+                node = next(iterator)
 
         Arguments:
             dont_recurse_on (base.BaseNode): If not None, will not include nodes
                 of this type or types or any of the descendants of those nodes.
+
         '''
-        # Start at a given location.
-        # 
-        # Yield the current node.
-        #
-        # Move down if possible.  Yield that node.  Continue until
-        # moving down is no longer possible.
-        #
-        # Move right if possible.  Yield that node.  Repeat as above,
-        # going down if possible and yielding.
-        #
-        # Go up until it's possible to move right again, don't yield
-        # any node (they've already been yielded).
+
+        # Start at the given node.
         location = Zipper(self.__wrapped__)
         while location is not None:
             if not isinstance(location, dont_recurse_on):
                 new_location = yield location
                 if new_location is not None:
                     location = new_location
+                # Move down if possible.  Yield that node.  Continue until
+                # moving down is no longer possible.
                 if location.down() is not None:
                     location = location.down()
                     continue
+            # Move right if possible.  Yield that node.  Repeat as above,
+            # going down if possible and yielding.
             if location.right() is not None:
                 location = location.right()
+            # Go up until it's possible to move right again, don't yield
+            # any nodes (they've already been yielded).
             else:
                 while location is not None:
                     location = location.up()
@@ -327,22 +346,16 @@ class Zipper(wrapt.ObjectProxy):
     def postorder_descendants(self, dont_recurse_on=()):
         '''Iterates over the descendants of the focus in postfix order.
 
+        See preorder_descendants() for how to use send() to edit a
+        zipper while traversing.
+
         Arguments:
             dont_recurse_on (base.BaseNode): If not None, will not include nodes
                 of this type or types or any of the descendants of those nodes.
-        '''
-        # Start at a given node.
-        # 
-        # Move down until it's no longer possible to move down, then
-        # yield that node.
-        # 
-        # If it's not possible to move down, move right, then try to
-        # move down again, repeat as above.
-        #
-        # Once it's no longer possible to move down or right, move up,
-        # yield that node.
 
+        '''
         location = Zipper(self.__wrapped__)
+        # Start at the leftmost descendant of the given node.
         while (location.down() is not None and not
                isinstance(location, dont_recurse_on)):
             location = location.down()
@@ -351,28 +364,34 @@ class Zipper(wrapt.ObjectProxy):
                 new_location = yield location
                 if new_location is not None:
                     location = new_location
+            # It's not possible to move down, so move right, then try
+            # to move down again.
             if location.right() is not None:
                 location = location.right()
+                # Move down until it's no longer possible to move down, then
+                # yield that node.
                 while (location.down() is not None and not
                        isinstance(location, dont_recurse_on)):
                     location = location.down()
             else:
+                # Once it's no longer possible to move down or right, move up,
+                # yield that node.
                 location = location.up()
 
-    def postorder_next(self):
-        if location.up() is None:
-            return
-        else:
-            if location.right() is not None:
-                if location.right().down():
-                    location = location.right().down()
-                    while location.down() is not None:
-                        location = location.down()
-                    return location
-                else:
-                    return location.right()
-            else:
-                return location.up()
+    # def postorder_next(self):
+    #     if location.up() is None:
+    #         return
+    #     else:
+    #         if location.right() is not None:
+    #             if location.right().down():
+    #                 location = location.right().down()
+    #                 while location.down() is not None:
+    #                     location = location.down()
+    #                 return location
+    #             else:
+    #                 return location.right()
+    #         else:
+    #             return location.up()
 
     def find_descendants_of_type(self, cls, skip_class=()):
         '''Iterates over the descendants of the focus of a given type in
@@ -389,6 +408,8 @@ class Zipper(wrapt.ObjectProxy):
     def replace(self, new_focus):
         '''Replaces the existing node at the focus.
 
+        This takes constant time.
+
         Arguments:
             new_focus (base.BaseNode, collections.Sequence): The object to
                 replace the focus with.
@@ -399,21 +420,33 @@ class Zipper(wrapt.ObjectProxy):
             new_path = None
         return type(self)(focus=new_focus, path=new_path)
 
-    def edit(self, **kws):
+    def edit(self, *args, **kws):
         '''Creates a new node from the existing node at the focus.
 
-        This method doesn't apply if the focus is a sequence.
+        If the focus is a node, this calls recreate() on the existing
+        node, passing it the variadic arguments.  If the focus is a
+        sequence, it calls the sequence's constructor with the
+        variadic arguments.  (For ordinary tuples and lists, passing
+        keyword arguments to this method will raise an exception.)
+
+        This takes constant time.
 
         Arguments:
-            kws (base.BaseNode): The fields to replace in the new node using
+            args (Tuple[Any]): Values to pass to recreate() or a sequence
+                constructor.
+            kws (Dict[str, Any]): The fields to replace in the new node using
                 recreate().
+
         '''
         if self._self_path:
             new_path = self._self_path._replace(changed=True)
         else:
             new_path = None
-        return type(self)(focus=self.__wrapped__.recreate(**kws),
-                          path=new_path)
+        if isinstance(self.__wrapped__, base.BaseNode):
+            new_focus = self.__wrapped__.recreate(*args, **kws)
+        else:
+            new_focus = self.__wrapped__.__class__(*args, **kws)
+        return type(self)(focus=new_focus, path=new_path)
 
     # Legacy APIs
     @property
@@ -438,17 +471,17 @@ class Zipper(wrapt.ObjectProxy):
                 yield child
             child = child.right()
 
-    def last_child(self):
-        return self.rightmost()
+    def statement(self):
+        '''Go to the first ancestor of the focus that's a Statement.
 
-    def next_sibling(self):
-        return self.right()
-
-    def previous_sibling(self):
-        return self.left()
-
-    def nodes_of_class(self, cls, skip_class=()):
-        return self.find_descendants_of_type(cls, skip_class)
+        This takes time linear in the number of ancestors of the focus.
+        '''
+        location = self
+        while (location is not None and
+               not isinstance(location.__wrapped__,
+                              (node_classes.Module, node_classes.Statement))):
+            location = location.up()
+        return location
 
     def frame(self):
         '''Go to the first ancestor of the focus that creates a new frame.
@@ -473,14 +506,15 @@ class Zipper(wrapt.ObjectProxy):
         """
         return scope.node_scope(self)
 
-    def statement(self):
-        '''Go to the first ancestor of the focus that's a Statement.
+    # Deprecated APIs
+    def last_child(self):
+        return self.rightmost()
 
-        This takes time linear in the number of ancestors of the focus.
-        '''
-        location = self
-        while (location is not None and
-               not isinstance(location.__wrapped__,
-                              (node_classes.Module, node_classes.Statement))):
-            location = location.up()
-        return location
+    def next_sibling(self):
+        return self.right()
+
+    def previous_sibling(self):
+        return self.left()
+
+    def nodes_of_class(self, cls, skip_class=()):
+        return self.find_descendants_of_type(cls, skip_class)
