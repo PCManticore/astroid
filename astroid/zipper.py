@@ -287,7 +287,7 @@ class Zipper(wrapt.ObjectProxy):
     # AST will overflow the call stack.  On CPython, avoiding the
     # extra function calls necessary for a recursive algorithm will
     # probably make them faster too.
-    def preorder_descendants(self, dont_recurse_on=()):
+    def preorder_descendants(self, dont_recurse_on=None):
         '''Iterates over the descendants of the focus in prefix order.
 
         In addition to iterating over a tree without changing it,
@@ -313,15 +313,15 @@ class Zipper(wrapt.ObjectProxy):
                 node = next(iterator)
 
         Arguments:
-            dont_recurse_on (base.BaseNode): If not None, will not include nodes
-                of this type or types or any of the descendants of those nodes.
-
+            dont_recurse_on (Callable[base.BaseNode] -> bool): If this returns
+                True for a node, this function will not iterate over that node
+                or any of its descendants.
         '''
 
         # Start at the given node.
         location = Zipper(self.__wrapped__)
         while location is not None:
-            if not isinstance(location, dont_recurse_on):
+            if not callable(dont_recurse_on) or not dont_recurse_on(location):
                 new_location = yield location
                 if new_location is not None:
                     location = new_location
@@ -343,24 +343,20 @@ class Zipper(wrapt.ObjectProxy):
                         location = location.right()
                         break
 
-    def postorder_descendants(self, dont_recurse_on=()):
+    def postorder_descendants(self, dont_recurse_on=None):
         '''Iterates over the descendants of the focus in postfix order.
 
         See preorder_descendants() for how to use send() to edit a
-        zipper while traversing.
-
-        Arguments:
-            dont_recurse_on (base.BaseNode): If not None, will not include nodes
-                of this type or types or any of the descendants of those nodes.
+        zipper while traversing and arguments.
 
         '''
         location = Zipper(self.__wrapped__)
         # Start at the leftmost descendant of the given node.
-        while (location.down() is not None and not
-               isinstance(location, dont_recurse_on)):
+        while (location.down() is not None and 
+               (not callable(dont_recurse_on) or not dont_recurse_on(location))):
             location = location.down()
         while location is not None:
-            if not isinstance(location, dont_recurse_on):
+            if not callable(dont_recurse_on) or not dont_recurse_on(location):
                 new_location = yield location
                 if new_location is not None:
                     location = new_location
@@ -370,8 +366,9 @@ class Zipper(wrapt.ObjectProxy):
                 location = location.right()
                 # Move down until it's no longer possible to move down, then
                 # yield that node.
-                while (location.down() is not None and not
-                       isinstance(location, dont_recurse_on)):
+                while (location.down() is not None and
+                       (not callable(dont_recurse_on) or not
+                        dont_recurse_on(location))):
                     location = location.down()
             else:
                 # Once it's no longer possible to move down or right, move up,
@@ -393,7 +390,7 @@ class Zipper(wrapt.ObjectProxy):
     #         else:
     #             return location.up()
 
-    def find_descendants_of_type(self, cls, skip_class=()):
+    def find_descendants_of_type(self, cls, dont_recurse_on=()):
         '''Iterates over the descendants of the focus of a given type in
         prefix order.
 
@@ -402,7 +399,8 @@ class Zipper(wrapt.ObjectProxy):
                 not include nodes of this type or types or any of the
                 descendants of those nodes.
         '''
-        return (d for d in self.preorder_descendants(skip_class) if isinstance(d, cls))
+        return (d for d in self.preorder_descendants(
+            lambda n: isinstance(n, dont_recurse_on)) if isinstance(d, cls))
 
     # Editing
     def replace(self, new_focus):

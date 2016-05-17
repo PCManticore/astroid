@@ -230,11 +230,11 @@ class TestZipper(unittest.TestCase):
             self.assertIs(node.__wrapped__, ast[label].node)
         for node, label in zip(random_node.preorder_descendants(), preorder_descendants(random_label, ast)):
             self.assertIs(node.__wrapped__, ast[label].node)
-        for node, label in zip(random_node.preorder_descendants(dont_recurse_on=node_type), preorder_descendants(random_label, ast, dont_recurse_on=node_type)):
+        for node, label in zip(random_node.preorder_descendants(dont_recurse_on=lambda n: isinstance(n, node_type)), preorder_descendants(random_label, ast, dont_recurse_on=node_type)):
             self.assertIs(node.__wrapped__, ast[label].node)
         for node, label in zip(random_node.postorder_descendants(), postorder_descendants(random_label, ast)):
             self.assertIs(node.__wrapped__, ast[label].node)
-        for node, label in zip(random_node.postorder_descendants(dont_recurse_on=node_type), postorder_descendants(random_label, ast, dont_recurse_on=node_type)):
+        for node, label in zip(random_node.postorder_descendants(dont_recurse_on=lambda n: isinstance(n, node_type)), postorder_descendants(random_label, ast, dont_recurse_on=node_type)):
             self.assertIs(node.__wrapped__, ast[label].node)
         for node, label in zip(random_node.get_children(), get_children(random_label, ast)):
             self.assertIs(node.__wrapped__, ast[label].node)
