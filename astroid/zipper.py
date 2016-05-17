@@ -1,6 +1,5 @@
 # Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html
 # For details: https://github.com/PyCQA/astroid/blob/master/COPYING.LESSER
-
 '''This contains an implementation of a zipper for astroid ASTs.
 
 A zipper is a data structure for traversing and editing immutable
@@ -36,7 +35,7 @@ def _linked_list(*values):
 def _reverse(linked_list):
     '''Reverses an existing linked list of tuples.'''
     if linked_list:
-        result = collections.deque((linked_list[0],))
+        result = collections.deque((linked_list[0], ))
         tail = linked_list[1]
         while tail:
             result.appendleft(tail[0])
@@ -93,14 +92,14 @@ def _initial(linked_list):
         tail = (result.pop(), tail)
     return tail
 
-
 # Attributes:
 #     left (linked list): The siblings to the left of the zipper's focus.
 #     right (linked list): The siblings to the right of the zipper's focus.
 #     parent_nodes (linked list): The ancestors of the zipper's focus
 #     parent_path (Path): The Path from the zipper that created this zipper.
 #     changed (bool): Whether this zipper has been edited or not.
-Path = collections.namedtuple('Path', 'left right parent_nodes parent_path changed')
+Path = collections.namedtuple('Path',
+                              'left right parent_nodes parent_path changed')
 
 
 class Zipper(wrapt.ObjectProxy):
@@ -140,7 +139,6 @@ class Zipper(wrapt.ObjectProxy):
         _init(self, focus)
         self._self_path = path
 
-
     # Traversal
     def left(self):
         '''Go to the next sibling that's directly to the left of the focus.
@@ -149,9 +147,9 @@ class Zipper(wrapt.ObjectProxy):
         '''
         if self._self_path and self._self_path.left:
             focus, left = self._self_path.left
-            path = self._self_path._replace(left=left,
-                                            right=(self.__wrapped__,
-                                                   self._self_path.right))
+            path = self._self_path._replace(
+                left=left,
+                right=(self.__wrapped__, self._self_path.right))
             return type(self)(focus=focus, path=path)
 
     def leftmost(self):
@@ -160,8 +158,10 @@ class Zipper(wrapt.ObjectProxy):
         This takes time linear in the number of left siblings.
         '''
         if self._self_path and self._self_path.left:
-            focus, siblings = _last(self._self_path.left), _initial(self._self_path.left)
-            right = _concatenate(_reverse(siblings), (self.__wrapped__, self._self_path.right))
+            focus, siblings = _last(self._self_path.left), _initial(
+                self._self_path.left)
+            right = _concatenate(_reverse(siblings),
+                                 (self.__wrapped__, self._self_path.right))
             path = self._self_path._replace(left=(), right=right)
             return type(self)(focus=focus, path=path)
 
@@ -172,9 +172,9 @@ class Zipper(wrapt.ObjectProxy):
         '''
         if self._self_path and self._self_path.right:
             focus, right = self._self_path.right
-            path = self._self_path._replace(left=(self.__wrapped__,
-                                                  self._self_path.left),
-                                            right=right)
+            path = self._self_path._replace(
+                left=(self.__wrapped__, self._self_path.left),
+                right=right)
             return type(self)(focus=focus, path=path)
 
     def rightmost(self):
@@ -183,8 +183,10 @@ class Zipper(wrapt.ObjectProxy):
         This takes time linear in the number of right siblings.
         '''
         if self._self_path and self._self_path.right:
-            siblings, focus = _initial(self._self_path.right), _last(self._self_path.right)
-            left = _concatenate(_reverse(siblings), (self.__wrapped__, self._self_path.left))
+            siblings, focus = _initial(self._self_path.right), _last(
+                self._self_path.right)
+            left = _concatenate(_reverse(siblings),
+                                (self.__wrapped__, self._self_path.left))
             path = self._self_path._replace(left=left, right=())
             return type(self)(focus=focus, path=path)
 
@@ -223,7 +225,8 @@ class Zipper(wrapt.ObjectProxy):
                 # This conditional uses parent_nodes to make going up
                 # take constant time if the focus hasn't been edited.
                 if changed:
-                    focus_node = _concatenate(_reverse(left), (self.__wrapped__, right))
+                    focus_node = _concatenate(_reverse(left),
+                                              (self.__wrapped__, right))
                     return type(self)(
                         focus=focus.make_node(focus_node),
                         path=parent_path and parent_path._replace(changed=True))
@@ -251,15 +254,18 @@ class Zipper(wrapt.ObjectProxy):
 
         '''
         if self._self_path:
-            self_ancestors = _reverse((self.__wrapped__, self._self_path.parent_nodes))
+            self_ancestors = _reverse(
+                (self.__wrapped__, self._self_path.parent_nodes))
         else:
             self_ancestors = (self.__wrapped__, ())
         if other._self_path:
-            other_ancestors = _reverse((other.__wrapped__, other._self_path.parent_nodes))
+            other_ancestors = _reverse(
+                (other.__wrapped__, other._self_path.parent_nodes))
         else:
             other_ancestors = (other.__wrapped__, ())
         ancestor = None
-        for self_ancestor, other_ancestor in zip(_iterate(self_ancestors), _iterate(other_ancestors)):
+        for self_ancestor, other_ancestor in zip(_iterate(self_ancestors),
+                                                 _iterate(other_ancestors)):
             # This is a kludge to work around the problem of two Empty
             # nodes in different parts of an AST.  Empty nodes can
             # never be ancestors, so they can be safely skipped.
@@ -339,8 +345,8 @@ class Zipper(wrapt.ObjectProxy):
             else:
                 while location is not None:
                     location = location.up()
-                    if (location is not None and location._self_path
-                        and location._self_path.right):
+                    if (location is not None and location._self_path and
+                        location._self_path.right):
                         location = location.right()
                         break
 
@@ -353,8 +359,10 @@ class Zipper(wrapt.ObjectProxy):
         '''
         location = Zipper(self.__wrapped__)
         # Start at the leftmost descendant of the given node.
-        while (((isinstance(location, base.BaseNode) and location._astroid_fields) or location) and 
-               (not callable(dont_recurse_on) or not dont_recurse_on(location))):
+        while (((isinstance(location, base.BaseNode) and
+                 location._astroid_fields) or location) and
+               (not callable(dont_recurse_on) or not dont_recurse_on(location))
+               ):
             location = location.down()
         while location is not None:
             if not callable(dont_recurse_on) or not dont_recurse_on(location):
@@ -367,9 +375,10 @@ class Zipper(wrapt.ObjectProxy):
                 location = location.right()
                 # Move down until it's no longer possible to move down, then
                 # yield that node.
-                while (((isinstance(location, base.BaseNode) and location._astroid_fields) or location) and
-                       (not callable(dont_recurse_on) or not
-                        dont_recurse_on(location))):
+                while (((isinstance(location, base.BaseNode) and
+                         location._astroid_fields) or location) and
+                       (not callable(dont_recurse_on) or
+                        not dont_recurse_on(location))):
                     location = location.down()
             else:
                 # Once it's no longer possible to move down or right, move up,
@@ -488,10 +497,10 @@ class Zipper(wrapt.ObjectProxy):
         This takes time linear in the number of ancestors of the focus.
         '''
         location = self
-        while (location is not None and not
-               isinstance(location.__wrapped__,
-                          (node_classes.FunctionDef, node_classes.Lambda,
-                           node_classes.ClassDef, node_classes.Module))):
+        while (location is not None and
+               not isinstance(location.__wrapped__,
+                              (node_classes.FunctionDef, node_classes.Lambda,
+                               node_classes.ClassDef, node_classes.Module))):
             location = location.up()
         return location
 
