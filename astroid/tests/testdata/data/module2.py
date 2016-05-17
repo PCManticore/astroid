@@ -1,6 +1,3 @@
-# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html
-# For details: https://github.com/PyCQA/astroid/blob/master/COPYING.LESSER
-
 from __future__ import print_function
 from data.module import YO, YOUPI #@
 import data
