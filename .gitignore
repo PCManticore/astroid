@@ -8,3 +8,5 @@ dist/
 astroid.egg-info/
 .tox
 .hypothesis
+.coverage
+.coverage.*
