@@ -215,10 +215,13 @@ class TreeRebuilder(object):
                 if variadic_annotation:
                     annotation = self.visit(variadic_annotation)
 
-                # TODO: fix lineno and col_offset, see #335.
+                lineno = getattr(variadic, 'lineno', None)
+                col_offset = getattr(variadic, 'col_offset', None)
                 param = nodes.Parameter(name=param_name,
                                         default=default,
-                                        annotation=annotation)
+                                        annotation=annotation,
+                                        lineno=lineno,
+                                        col_offset=col_offset)
             return param
 
         def _build_args(params, defaults):
